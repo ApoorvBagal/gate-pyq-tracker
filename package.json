@@ -1,0 +1,15 @@
+{
+  "name": "gate-pyq-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GATE CSE PYQ tracker (GATE Overflow Vol 1 + 2), synced across devices via Postgres",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.12.0"
+  }
+}

@@ -34,6 +34,21 @@ async function init() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       UNIQUE (volume, qid)
     )`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pdf_files (
+      name TEXT PRIMARY KEY,
+      data BYTEA NOT NULL,
+      etag TEXT NOT NULL,
+      uploaded_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS annotations (
+      volume TEXT NOT NULL,
+      page INT NOT NULL,
+      strokes JSONB NOT NULL DEFAULT '[]',
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (volume, page)
+    )`);
   const { rows } = await pool.query("SELECT COUNT(*)::int AS n FROM questions");
   if (rows[0].n === 0) {
     const qs = require("./data/questions.json");
@@ -151,6 +166,69 @@ app.get("/api/export.csv", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// ---- annotations: pen strokes per (volume, page), normalized 0..1 coords ----
+const VOLS = ["vol1", "vol2"];
+app.get("/api/annotations/:vol", async (req, res, next) => {
+  try {
+    if (!VOLS.includes(req.params.vol)) return res.status(404).end();
+    const { rows } = await pool.query(
+      "SELECT page, strokes FROM annotations WHERE volume=$1 AND jsonb_array_length(strokes) > 0", [req.params.vol]);
+    res.json(Object.fromEntries(rows.map((r) => [r.page, r.strokes])));
+  } catch (e) { next(e); }
+});
+app.put("/api/annotations/:vol/:page", express.json({ limit: "2mb" }), async (req, res, next) => {
+  try {
+    const page = Number(req.params.page);
+    if (!VOLS.includes(req.params.vol) || !Number.isInteger(page) || page < 1) return res.status(400).end();
+    if (!Array.isArray(req.body?.strokes)) return res.status(400).json({ error: "strokes must be an array" });
+    await pool.query(
+      `INSERT INTO annotations (volume,page,strokes,updated_at) VALUES ($1,$2,$3,now())
+       ON CONFLICT (volume,page) DO UPDATE SET strokes=EXCLUDED.strokes, updated_at=now()`,
+      [req.params.vol, page, JSON.stringify(req.body.strokes)]);
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+// ---- PDFs: stored in Postgres, cached in memory, served with Range support ----
+const pdfCache = new Map();
+async function getPdf(name) {
+  if (pdfCache.has(name)) return pdfCache.get(name);
+  const { rows } = await pool.query("SELECT data, etag FROM pdf_files WHERE name=$1", [name]);
+  if (!rows.length) return null;
+  const f = { data: rows[0].data, etag: `"${rows[0].etag}"` };
+  pdfCache.set(name, f);
+  return f;
+}
+app.get("/pdf/:vol", async (req, res, next) => {
+  try {
+    if (!validToken(getCookie(req, COOKIE))) return res.status(401).end();
+    if (!VOLS.includes(req.params.vol)) return res.status(404).end();
+    const f = await getPdf(req.params.vol);
+    if (!f) return res.status(404).send("PDF not uploaded yet. Run: npm run upload-pdfs");
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Accept-Ranges", "bytes");
+    res.setHeader("ETag", f.etag);
+    res.setHeader("Cache-Control", "private, max-age=86400");
+    if (req.headers["if-none-match"] === f.etag) return res.status(304).end();
+    const size = f.data.length;
+    const m = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || "");
+    if (m) {
+      let start = m[1] ? Number(m[1]) : size - Number(m[2]);
+      let end = m[1] && m[2] ? Number(m[2]) : size - 1;
+      end = Math.min(end, size - 1);
+      if (start > end || start < 0) return res.status(416).setHeader("Content-Range", `bytes */${size}`).end();
+      res.status(206).setHeader("Content-Range", `bytes ${start}-${end}/${size}`);
+      res.setHeader("Content-Length", end - start + 1);
+      return res.end(f.data.subarray(start, end + 1));
+    }
+    res.setHeader("Content-Length", size);
+    res.end(f.data);
+  } catch (e) { next(e); }
+});
+
+const mjs = { setHeaders: (res, p) => { if (p.endsWith(".mjs")) res.setHeader("Content-Type", "text/javascript"); } };
+app.use("/vendor/pdfjs", express.static(path.join(__dirname, "node_modules/pdfjs-dist/build"), mjs));
+app.use("/vendor/pdf-lib", express.static(path.join(__dirname, "node_modules/pdf-lib/dist")));
 app.use(express.static(path.join(__dirname, "public")));
 app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: "Server error" }); });
 

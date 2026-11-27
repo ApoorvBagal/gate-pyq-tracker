@@ -26,3 +26,12 @@ $env:DATABASE_URL="..."; $env:APP_PASSWORD="..."; $env:SESSION_SECRET="anything"
 - Reloads data when you come back to the tab, so changes from the other laptop show up
 
 `scripts/extract_xlsx.py` regenerates `data/questions.json` from the original xlsx.
+
+## PDFs + annotations
+- PDFs live in Postgres (`pdf_files`), not in git. To (re)upload, put `volume1.pdf` / `volume2.pdf` in this folder and run
+  `node --env-file=.env scripts/upload_pdfs.js` (skips unchanged files).
+- Clicking 📄 on a question opens `/viewer.html?vol=vol2&page=57`: PDF.js viewer with pen (blue/red/green),
+  highlighter, eraser, undo/redo. Keys: V hand, P pen, H highlighter, E eraser, Ctrl+Z / Ctrl+Y.
+- Strokes are saved per page in the `annotations` table (autosave; queued in localStorage while offline).
+- The bottom bar lists the questions on the current page with status buttons.
+- "Annotated PDF" bakes your marks into a downloadable copy (originals are never modified).

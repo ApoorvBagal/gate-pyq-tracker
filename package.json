@@ -5,11 +5,16 @@
   "description": "GATE CSE PYQ tracker (GATE Overflow Vol 1 + 2), synced across devices via Postgres",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "upload-pdfs": "node scripts/upload_pdfs.js"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
-    "express": "^4.19.2",
-    "pg": "^8.12.0"
+    "express": "^4.22.3",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^4.10.38",
+    "pg": "^8.23.1"
   }
 }

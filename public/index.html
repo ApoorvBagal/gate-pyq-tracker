@@ -3,90 +3,531 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>GATE PYQ Tracker</title>
+<title>GATE CSE PYQ Tracker</title>
 <style>
-  :root { --bg:#0f1220; --card:#181c2e; --line:#2a2f48; --fg:#e6e8f2; --mut:#8b90a8; --acc:#6c8cff;
-          --ok:#3ecf8e; --bad:#ff6b6b; --shaky:#f5b041; --un:#5b6078; }
+  :root {
+    --bg: #0b0e17;
+    --bg-elev: #121726;
+    --bg-card: #161c2e;
+    --bg-hover: #1d253d;
+    --bg-input: #0e1320;
+    --line: #232b42;
+    --line-strong: #323d5c;
+    --fg: #eef1f8;
+    --fg-soft: #c4cbe0;
+    --mut: #8490b0;
+    --acc: #6366f1;
+    --acc-hover: #818cf8;
+    --acc-soft: rgba(99, 102, 241, 0.14);
+    --ok: #22c55e;
+    --ok-soft: rgba(34, 197, 94, 0.14);
+    --bad: #ef4444;
+    --bad-soft: rgba(239, 68, 68, 0.14);
+    --shaky: #f59e0b;
+    --shaky-soft: rgba(245, 158, 11, 0.15);
+    --un: #475569;
+    --un-soft: rgba(71, 85, 105, 0.22);
+    --star: #facc15;
+    --shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+    --radius: 12px;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  [data-theme="light"] {
+    --bg: #f5f7fb;
+    --bg-elev: #ffffff;
+    --bg-card: #ffffff;
+    --bg-hover: #f1f5fd;
+    --bg-input: #f8fafc;
+    --line: #e2e8f0;
+    --line-strong: #cbd5e1;
+    --fg: #0f172a;
+    --fg-soft: #334155;
+    --mut: #64748b;
+    --acc: #4f46e5;
+    --acc-hover: #4338ca;
+    --acc-soft: rgba(79, 70, 229, 0.1);
+    --ok: #16a34a;
+    --ok-soft: rgba(22, 163, 74, 0.12);
+    --bad: #dc2626;
+    --bad-soft: rgba(220, 38, 38, 0.11);
+    --shaky: #d97706;
+    --shaky-soft: rgba(217, 119, 6, 0.13);
+    --un: #94a3b8;
+    --un-soft: rgba(148, 163, 184, 0.2);
+    --star: #eab308;
+    --shadow: 0 6px 24px rgba(15, 23, 42, 0.08);
+  }
   * { box-sizing: border-box; }
-  body { margin:0; font:14px/1.4 system-ui,Segoe UI,sans-serif; background:var(--bg); color:var(--fg); }
-  header { display:flex; gap:12px; align-items:center; padding:12px 18px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:5; }
-  header h1 { font-size:17px; margin:0; flex:1; }
-  button, select, input, textarea { font:inherit; color:var(--fg); background:var(--card); border:1px solid var(--line); border-radius:6px; padding:6px 10px; }
-  button { cursor:pointer; } button.on { background:var(--acc); border-color:var(--acc); color:#fff; }
-  main { padding:16px 18px; max-width:1300px; margin:auto; }
-  .hidden { display:none !important; }
-  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:16px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px; }
-  .card b { font-size:22px; display:block; } .card span { color:var(--mut); font-size:12px; }
-  table { width:100%; border-collapse:collapse; }
-  th, td { padding:7px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle; }
-  th { color:var(--mut); font-weight:500; font-size:12px; position:sticky; top:57px; background:var(--bg); }
-  tr.sub:hover { background:#1d2238; cursor:pointer; }
-  .bar { height:8px; background:var(--un); border-radius:4px; overflow:hidden; display:flex; min-width:120px; }
-  .bar i { display:block; height:100%; }
-  .filters { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
-  .filters input[type=search] { flex:1; min-width:180px; }
-  .st { display:flex; gap:3px; }
-  .st button { padding:3px 7px; font-size:12px; opacity:.45; }
-  .st button.sel { opacity:1; color:#111; font-weight:600; }
-  .st .Solved.sel { background:var(--ok); } .st .Wrong.sel { background:var(--bad); }
-  .st .Shaky.sel { background:var(--shaky); } .st .Unsolved.sel { background:var(--un); color:#fff; }
-  .star { background:none; border:none; font-size:18px; color:var(--mut); padding:0 4px; }
-  .star.on { color:#ffd84d; }
-  textarea.note { width:100%; min-width:160px; height:30px; resize:vertical; font-size:12px; padding:4px 6px; }
-  .mut { color:var(--mut); font-size:12px; }
-  a.pdfl { color:var(--acc); text-decoration:none; white-space:nowrap; }
-  .pill { font-size:11px; padding:1px 6px; border-radius:8px; background:#252a42; color:var(--mut); }
-  #login { max-width:320px; margin:15vh auto; display:flex; flex-direction:column; gap:10px; }
-  #toast { position:fixed; bottom:16px; right:16px; background:var(--card); border:1px solid var(--line); padding:8px 12px; border-radius:6px; opacity:0; transition:.2s; }
-  #toast.show { opacity:1; }
-  .pager { display:flex; gap:8px; align-items:center; justify-content:center; margin:14px 0; }
-  @media (max-width:800px){ .hide-sm { display:none; } th { top:0; position:static; } }
+  body {
+    margin: 0;
+    font: 14px/1.5 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    -webkit-font-smoothing: antialiased;
+  }
+  .hidden { display: none !important; }
+  .num { font-variant-numeric: tabular-nums; }
+  .mono { font-family: var(--mono); }
+
+  /* Buttons & Inputs */
+  button, select, input, textarea {
+    font: inherit;
+    color: var(--fg);
+    background: var(--bg-input);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 7px 11px;
+    transition: border-color .15s, background .15s, color .15s, transform .1s;
+  }
+  button {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-weight: 500;
+    background: var(--bg-card);
+  }
+  button:hover:not(:disabled) { border-color: var(--line-strong); background: var(--bg-hover); }
+  button:active:not(:disabled) { transform: translateY(0.5px); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.primary { background: var(--acc); border-color: var(--acc); color: #fff; }
+  button.primary:hover:not(:disabled) { background: var(--acc-hover); border-color: var(--acc-hover); }
+  button.ghost { background: transparent; border-color: transparent; color: var(--fg-soft); }
+  button.ghost:hover { background: var(--bg-hover); color: var(--fg); }
+  select:focus, input:focus, textarea:focus { outline: none; border-color: var(--acc); box-shadow: 0 0 0 3px var(--acc-soft); }
+
+  /* Login */
+  #loginWrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: radial-gradient(circle at 50% 0%, var(--acc-soft), transparent 55%);
+  }
+  #login {
+    width: 100%;
+    max-width: 360px;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  #login .brand-badge {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--acc-soft); color: var(--acc-hover);
+    display: grid; place-items: center; font-size: 20px; font-weight: 700;
+  }
+  #login h2 { margin: 0; font-size: 20px; letter-spacing: -0.02em; }
+  #login p { margin: -8px 0 4px; color: var(--mut); font-size: 13px; }
+  #login .pw-wrap { position: relative; display: flex; }
+  #login .pw-wrap input { width: 100%; padding-right: 40px; }
+  #login .pw-toggle { position: absolute; right: 4px; top: 4px; bottom: 4px; padding: 0 8px; border: none; background: transparent; color: var(--mut); }
+  #loginErr { color: var(--bad); font-size: 13px; min-height: 18px; }
+
+  /* Header */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--bg-elev) 88%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .hdr-in {
+    max-width: 1360px; margin: auto; padding: 10px 20px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+  .brand-ic {
+    width: 32px; height: 32px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--acc), #8b5cf6);
+    color: #fff; font-weight: 700; font-size: 14px;
+    display: grid; place-items: center; letter-spacing: -0.03em;
+  }
+  .brand h1 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+  .brand small { display: block; color: var(--mut); font-size: 11px; font-weight: 400; margin-top: -2px; }
+
+  .nav-tabs {
+    display: inline-flex; background: var(--bg-input); padding: 3px;
+    border-radius: 10px; border: 1px solid var(--line); gap: 2px;
+  }
+  .nav-tabs button {
+    border: none; background: transparent; color: var(--mut);
+    padding: 5px 13px; border-radius: 7px; font-size: 13px;
+  }
+  .nav-tabs button.on { background: var(--bg-card); color: var(--fg); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .hdr-actions { display: flex; align-items: center; gap: 6px; }
+  .hdr-actions a { text-decoration: none; }
+
+  /* Layout */
+  main { max-width: 1360px; margin: auto; padding: 22px 20px 60px; }
+
+  /* Hero progress card */
+  .hero {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 20px 22px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 18px;
+    align-items: center;
+  }
+  .hero-top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+  .hero-pct { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+  .hero-sub { color: var(--mut); font-size: 13px; }
+  .hero-bar { height: 12px; background: var(--un-soft); border-radius: 99px; overflow: hidden; display: flex; }
+  .hero-bar i { display: block; height: 100%; transition: width .3s ease; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 12.5px; color: var(--fg-soft); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+  .quick-btn { font-size: 13px; padding: 8px 13px; border-radius: 9px; }
+  .quick-btn .cnt {
+    font-size: 11px; padding: 1px 6px; border-radius: 99px;
+    background: var(--bg-input); color: var(--fg-soft);
+  }
+  .quick-btn.warn { border-color: color-mix(in srgb, var(--shaky) 40%, var(--line)); }
+  .quick-btn.warn .cnt { background: var(--shaky-soft); color: var(--shaky); }
+  .quick-btn.starb { border-color: color-mix(in srgb, var(--star) 40%, var(--line)); }
+  .quick-btn.starb .cnt { background: rgba(250,204,21,0.16); color: var(--star); }
+
+  /* Stat strip */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: border-color .15s, transform .15s;
+  }
+  .stat-card:hover { border-color: var(--line-strong); transform: translateY(-1px); }
+  .stat-card .lbl { font-size: 12px; color: var(--mut); display: flex; align-items: center; justify-content: space-between; }
+  .stat-card .val { font-size: 24px; font-weight: 700; margin-top: 4px; letter-spacing: -0.02em; }
+
+  /* Subject groups */
+  .grp-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 22px 0 10px;
+  }
+  .grp-hdr h2 { margin: 0; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--mut); }
+  .grp-hdr .grp-meta { font-size: 12.5px; color: var(--mut); }
+
+  .card-table {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  th {
+    color: var(--mut); font-weight: 600; font-size: 11.5px;
+    text-transform: uppercase; letter-spacing: .04em;
+    background: var(--bg-elev);
+  }
+  tr.clickable { cursor: pointer; transition: background .12s; }
+  tr.clickable:hover { background: var(--bg-hover); }
+  .subj-name { font-weight: 600; color: var(--fg); }
+  .bar { height: 7px; background: var(--un-soft); border-radius: 99px; overflow: hidden; display: flex; min-width: 110px; }
+  .bar i { display: block; height: 100%; }
+
+  .badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 2px 7px; border-radius: 6px; font-size: 12px; font-weight: 600;
+    min-width: 28px;
+  }
+  .b-ok { background: var(--ok-soft); color: var(--ok); }
+  .b-bad { background: var(--bad-soft); color: var(--bad); }
+  .b-shaky { background: var(--shaky-soft); color: var(--shaky); }
+  .b-un { background: var(--un-soft); color: var(--mut); }
+  .b-star { background: rgba(250,204,21,0.14); color: var(--star); }
+  .b-zero { color: var(--mut); opacity: .45; font-weight: 400; font-size: 12px; padding: 0 7px; }
+
+  /* Filters */
+  .filter-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .filters-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .search-wrap { position: relative; flex: 1; min-width: 220px; }
+  .search-wrap input { width: 100%; padding-left: 32px; }
+  .search-wrap .s-ic { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--mut); pointer-events: none; font-size: 13px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .chip {
+    font-size: 12px; padding: 4px 10px; border-radius: 99px;
+    background: var(--bg-input); border: 1px solid var(--line); color: var(--fg-soft);
+  }
+  .chip.on { background: var(--acc-soft); border-color: var(--acc); color: var(--acc-hover); }
+  .chip.on-star { background: rgba(250,204,21,0.15); border-color: var(--star); color: var(--star); }
+  .chip.on-warn { background: var(--shaky-soft); border-color: var(--shaky); color: var(--shaky); }
+
+  .list-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px; font-size: 12.5px; color: var(--mut);
+  }
+
+  /* Questions table */
+  .q-table-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow-x: auto;
+  }
+  .q-table td { padding: 8px 10px; }
+  .qid { font-family: var(--mono); font-weight: 600; font-size: 13px; white-space: nowrap; }
+  .vol-tag {
+    font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 5px;
+    background: var(--bg-input); border: 1px solid var(--line); color: var(--mut); white-space: nowrap;
+  }
+  .topic-cell { font-weight: 500; color: var(--fg); }
+  .topic-cell small { display: block; color: var(--mut); font-size: 11.5px; font-weight: 400; }
+  .exam-cell { color: var(--fg-soft); font-size: 12.5px; max-width: 210px; }
+
+  a.pdfl {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 6px;
+    background: var(--acc-soft); color: var(--acc-hover);
+    text-decoration: none; font-size: 12px; font-weight: 600;
+    white-space: nowrap; transition: background .15s;
+  }
+  a.pdfl:hover { background: var(--acc); color: #fff; }
+
+  .diff { font-size: 11px; padding: 2px 7px; border-radius: 99px; font-weight: 600; white-space: nowrap; }
+  .diff-Easy { background: var(--ok-soft); color: var(--ok); }
+  .diff-Normal { background: var(--acc-soft); color: var(--acc-hover); }
+  .diff-Difficult { background: var(--bad-soft); color: var(--bad); }
+
+  /* Status segmented control */
+  .st {
+    display: inline-flex; background: var(--bg-input); padding: 2px;
+    border-radius: 8px; border: 1px solid var(--line); gap: 2px;
+  }
+  .st button {
+    border: none; background: transparent; padding: 3px 8px;
+    font-size: 12px; border-radius: 6px; color: var(--mut); font-weight: 600;
+  }
+  .st button:hover { color: var(--fg); background: var(--bg-hover); }
+  .st button.sel { color: #fff; }
+  .st .Solved.sel { background: var(--ok); color: #052e16; }
+  .st .Wrong.sel { background: var(--bad); color: #fff; }
+  .st .Shaky.sel { background: var(--shaky); color: #451a03; }
+  .st .Unsolved.sel { background: var(--un); color: #fff; }
+
+  .star {
+    background: none; border: none; font-size: 18px; color: var(--line-strong);
+    padding: 2px 5px; border-radius: 6px;
+  }
+  .star:hover { background: var(--bg-hover); color: var(--star); }
+  .star.on { color: var(--star); }
+
+  textarea.note {
+    width: 100%; min-width: 170px; height: 32px; resize: vertical;
+    font-size: 12.5px; padding: 5px 8px; line-height: 1.35;
+    background: var(--bg-input); border-color: transparent;
+  }
+  textarea.note:hover { border-color: var(--line); }
+  textarea.note:focus { border-color: var(--acc); height: 64px; }
+
+  .pager {
+    display: flex; gap: 10px; align-items: center; justify-content: center;
+    margin-top: 16px;
+  }
+
+  /* Topics view */
+  .topics-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+  .topics-bar input { flex: 1; min-width: 200px; }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 20px; right: 20px; z-index: 50;
+    background: var(--bg-card); border: 1px solid var(--line-strong);
+    padding: 9px 14px; border-radius: 10px; box-shadow: var(--shadow);
+    font-size: 13px; font-weight: 500;
+    opacity: 0; transform: translateY(8px); pointer-events: none;
+    transition: opacity .2s, transform .2s;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+
+  .empty { text-align: center; padding: 48px 20px; color: var(--mut); }
+
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-actions { justify-content: flex-start; }
+    .hide-md { display: none; }
+  }
+  @media (max-width: 680px) {
+    .hide-sm { display: none; }
+    .hdr-in { padding: 10px 12px; }
+    main { padding: 14px 12px 48px; }
+  }
 </style>
 </head>
 <body>
-<form id="login" class="hidden">
-  <h2>GATE PYQ Tracker</h2>
-  <input type="password" id="pw" placeholder="Password" autofocus />
-  <button class="on">Log in</button>
-  <div id="loginErr" class="mut"></div>
-</form>
+
+<div id="loginWrap" class="hidden">
+  <form id="login">
+    <div class="brand-badge">G</div>
+    <h2>GATE PYQ Tracker</h2>
+    <p>Enter your password to access your synced progress & PDFs.</p>
+    <div class="pw-wrap">
+      <input type="password" id="pw" placeholder="Password" autocomplete="current-password" autofocus />
+      <button type="button" class="pw-toggle" id="pwToggle" title="Show/hide password">👁</button>
+    </div>
+    <button class="primary" type="submit">Sign in</button>
+    <div id="loginErr"></div>
+  </form>
+</div>
 
 <div id="app" class="hidden">
   <header>
-    <h1>GATE CSE PYQ Tracker</h1>
-    <button data-view="dash" class="on">Dashboard</button>
-    <button data-view="list">Questions</button>
-    <a href="/api/export.csv"><button>Export CSV</button></a>
-    <button id="logout">Log out</button>
+    <div class="hdr-in">
+      <div class="brand">
+        <div class="brand-ic">G</div>
+        <div>
+          <h1>GATE CSE PYQ</h1>
+          <small>Vol 1 + Vol 2 · 2,580 Questions</small>
+        </div>
+      </div>
+      <div class="nav-tabs">
+        <button data-view="dash" class="on">Dashboard</button>
+        <button data-view="topics">Topics</button>
+        <button data-view="list">Questions</button>
+      </div>
+      <div class="hdr-actions">
+        <a href="/viewer.html?vol=vol1&page=1" target="_blank"><button class="ghost" title="Open Volume 1 PDF">Vol 1</button></a>
+        <a href="/viewer.html?vol=vol2&page=1" target="_blank"><button class="ghost" title="Open Volume 2 PDF">Vol 2</button></a>
+        <button id="themeBtn" class="ghost" title="Switch light / dark theme">☀</button>
+        <a href="/api/export.csv"><button class="ghost" title="Download CSV backup">⬇ CSV</button></a>
+        <button id="logout" class="ghost" title="Log out">Log out</button>
+      </div>
+    </div>
   </header>
+
   <main>
+    <!-- DASHBOARD -->
     <section id="dash">
-      <div class="cards" id="cards"></div>
-      <table>
-        <thead><tr><th>Subject</th><th>Total</th><th>Solved</th><th>Wrong</th><th>Shaky</th><th>Unsolved</th><th>% Solved</th><th class="hide-sm">Progress</th><th>★ pending</th></tr></thead>
-        <tbody id="subj"></tbody>
-      </table>
-      <p class="mut">Click a subject to open its questions. Status: a guessed or hesitant answer is <b>Shaky</b>, not Solved.</p>
+      <div class="hero" id="hero"></div>
+      <div class="stats-grid" id="cards"></div>
+      <div id="subjGroups"></div>
     </section>
 
-    <section id="list" class="hidden">
-      <div class="filters">
-        <input type="search" id="q" placeholder="Search ID, topic, exam, notes…" />
-        <select id="fSubject"><option value="">All subjects</option></select>
-        <select id="fTopic"><option value="">All topics</option></select>
-        <select id="fVol"><option value="">Both volumes</option><option>Vol 1</option><option>Vol 2</option></select>
-        <select id="fStatus"><option value="">Any status</option><option>Unsolved</option><option>Solved</option><option>Wrong</option><option>Shaky</option><option value="needs">Wrong + Shaky</option></select>
-        <select id="fDiff"><option value="">Any difficulty</option><option>Easy</option><option>Normal</option><option>Difficult</option><option value="none">Untagged</option></select>
-        <label class="mut"><input type="checkbox" id="fImp" /> ★ only</label>
-        <button id="clear">Clear</button>
+    <!-- TOPICS -->
+    <section id="topics" class="hidden">
+      <div class="topics-bar">
+        <input type="search" id="tSearch" placeholder="Filter topics or subjects…" />
+        <select id="tSubj"><option value="">All subjects</option></select>
+        <select id="tSort">
+          <option value="default">Book order</option>
+          <option value="total">Most questions</option>
+          <option value="unsolved">Most unsolved</option>
+          <option value="pct-asc">Lowest % solved</option>
+          <option value="pct-desc">Highest % solved</option>
+        </select>
       </div>
-      <div class="mut" id="count"></div>
-      <table>
-        <thead><tr><th>ID</th><th>Vol</th><th class="hide-sm">Topic</th><th>Exam</th><th>Page</th><th class="hide-sm">Diff</th><th>Status</th><th>★</th><th class="hide-sm">Last</th><th>Notes</th></tr></thead>
-        <tbody id="rows"></tbody>
-      </table>
-      <div class="pager"><button id="prev">‹ Prev</button><span id="pg" class="mut"></span><button id="next">Next ›</button></div>
+      <div class="card-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Topic</th>
+              <th class="hide-sm">Subject</th>
+              <th>Total</th>
+              <th>Solved</th>
+              <th class="hide-sm">Wrong</th>
+              <th class="hide-sm">Shaky</th>
+              <th>% Solved</th>
+              <th class="hide-md">Progress</th>
+            </tr>
+          </thead>
+          <tbody id="topicRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- QUESTIONS -->
+    <section id="list" class="hidden">
+      <div class="filter-panel">
+        <div class="filters-row">
+          <div class="search-wrap">
+            <span class="s-ic">🔍</span>
+            <input type="search" id="q" placeholder="Search ID, topic, exam, notes…" />
+          </div>
+          <select id="fSubject"><option value="">All subjects</option></select>
+          <select id="fTopic"><option value="">All topics</option></select>
+          <select id="fVol"><option value="">Both volumes</option><option>Vol 1</option><option>Vol 2</option></select>
+          <select id="fStatus">
+            <option value="">Any status</option>
+            <option>Unsolved</option>
+            <option>Solved</option>
+            <option>Wrong</option>
+            <option>Shaky</option>
+            <option value="needs">Wrong + Shaky</option>
+          </select>
+          <select id="fDiff">
+            <option value="">Any difficulty</option>
+            <option>Easy</option>
+            <option>Normal</option>
+            <option>Difficult</option>
+            <option value="none">Untagged</option>
+          </select>
+          <button id="clear" class="ghost">Reset</button>
+        </div>
+        <div class="chips">
+          <button type="button" class="chip" id="chipImp">★ Starred only</button>
+          <button type="button" class="chip" id="chipNeeds">⚡ Wrong + Shaky</button>
+          <button type="button" class="chip" id="chipUnsolved">○ Unsolved only</button>
+          <span style="margin-left:auto;font-size:12px;color:var(--mut)">Tip: <b>U</b> Unsolved · <b>S</b> Solved · <b>W</b> Wrong · <b>K</b> Shaky</span>
+        </div>
+      </div>
+
+      <div class="list-meta">
+        <span id="count"></span>
+        <span id="pageRange" class="num"></span>
+      </div>
+
+      <div class="q-table-wrap">
+        <table class="q-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Vol</th>
+              <th>Topic</th>
+              <th class="hide-md">Exam</th>
+              <th>PDF</th>
+              <th class="hide-md">Diff</th>
+              <th>Status</th>
+              <th>★</th>
+              <th class="hide-md">Last</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+      <div class="pager">
+        <button id="prev">‹ Previous</button>
+        <span id="pg" class="num" style="color:var(--mut);font-size:13px"></span>
+        <button id="next">Next ›</button>
+      </div>
     </section>
   </main>
 </div>
@@ -94,12 +535,26 @@
 
 <script>
 const $ = (s) => document.querySelector(s);
-const STAT = ["Unsolved","Solved","Wrong","Shaky"];
+const STAT = ["Unsolved", "Solved", "Wrong", "Shaky"];
+const STAT_LABEL = { Unsolved: "U", Solved: "S", Wrong: "W", Shaky: "K" };
 const PAGE = 100;
-let Q = [], page = 0;
+let Q = [], page = 0, currentView = "dash";
 
-const toast = (m) => { const t = $("#toast"); t.textContent = m; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1500); };
+// Theme
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem("gate-theme", t);
+  $("#themeBtn").textContent = t === "light" ? "🌙" : "☀";
+}
+applyTheme(localStorage.getItem("gate-theme") || "dark");
+$("#themeBtn").onclick = () => applyTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light");
+
+const toast = (m) => {
+  const t = $("#toast"); t.textContent = m; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1600);
+};
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+const isMaths = (s) => s.startsWith("Discrete Maths") || s.startsWith("Eng Maths");
 
 async function api(url, opts = {}) {
   const r = await fetch(url, { headers: { "Content-Type": "application/json" }, ...opts });
@@ -107,94 +562,292 @@ async function api(url, opts = {}) {
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
   return r.json();
 }
-function showLogin() { $("#app").classList.add("hidden"); $("#login").classList.remove("hidden"); $("#pw").focus(); }
+function showLogin() {
+  $("#app").classList.add("hidden");
+  $("#loginWrap").classList.remove("hidden");
+  $("#pw").focus();
+}
 
+$("#pwToggle").onclick = () => {
+  const inp = $("#pw");
+  inp.type = inp.type === "password" ? "text" : "password";
+};
 $("#login").onsubmit = async (e) => {
   e.preventDefault();
-  const r = await fetch("/api/login", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ password: $("#pw").value }) });
-  if (!r.ok) { $("#loginErr").textContent = "Wrong password"; return; }
-  $("#login").classList.add("hidden"); load();
+  $("#loginErr").textContent = "";
+  const r = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: $("#pw").value }) });
+  if (!r.ok) { $("#loginErr").textContent = "Incorrect password. Try again."; return; }
+  $("#pw").value = "";
+  $("#loginWrap").classList.add("hidden");
+  load();
 };
-$("#logout").onclick = async () => { await fetch("/api/logout", { method:"POST" }); showLogin(); };
+$("#logout").onclick = async () => { await fetch("/api/logout", { method: "POST" }); showLogin(); };
 
 async function load() {
   Q = await api("/api/questions");
   $("#app").classList.remove("hidden");
   const subs = [...new Set(Q.map((q) => q.subject))];
-  $("#fSubject").innerHTML = '<option value="">All subjects</option>' + subs.map((s) => `<option>${esc(s)}</option>`).join("");
-  fillTopics(); renderDash(); renderList();
+  const prevS = $("#fSubject").value, prevTS = $("#tSubj").value;
+  const subOpts = '<option value="">All subjects</option>' + subs.map((s) => `<option>${esc(s)}</option>`).join("");
+  $("#fSubject").innerHTML = subOpts; $("#fSubject").value = prevS;
+  $("#tSubj").innerHTML = subOpts; $("#tSubj").value = prevTS;
+  fillTopics();
+  renderAll();
+}
+function renderAll() {
+  renderDash();
+  if (currentView === "topics") renderTopics();
+  if (currentView === "list") renderList();
 }
 function fillTopics() {
   const s = $("#fSubject").value;
   const t = [...new Set(Q.filter((q) => !s || q.subject === s).map((q) => q.topic))].sort();
   const cur = $("#fTopic").value;
-  $("#fTopic").innerHTML = '<option value="">All topics</option>' + t.map((x) => `<option ${x===cur?"selected":""}>${esc(x)}</option>`).join("");
+  $("#fTopic").innerHTML = '<option value="">All topics</option>' + t.map((x) => `<option ${x === cur ? "selected" : ""}>${esc(x)}</option>`).join("");
 }
 
 function counts(list) {
-  const c = { total: list.length, Solved:0, Wrong:0, Shaky:0, Unsolved:0, imp:0 };
-  list.forEach((q) => { c[q.status]++; if (q.important && q.status !== "Solved") c.imp++; });
+  const c = { total: list.length, Solved: 0, Wrong: 0, Shaky: 0, Unsolved: 0, imp: 0 };
+  for (const q of list) { c[q.status]++; if (q.important && q.status !== "Solved") c.imp++; }
   return c;
 }
-function bar(c) {
+function bar(c, cls = "bar") {
   const w = (n) => (c.total ? (n / c.total) * 100 : 0);
-  return `<div class="bar"><i style="width:${w(c.Solved)}%;background:var(--ok)"></i><i style="width:${w(c.Shaky)}%;background:var(--shaky)"></i><i style="width:${w(c.Wrong)}%;background:var(--bad)"></i></div>`;
+  return `<div class="${cls}">
+    <i style="width:${w(c.Solved)}%;background:var(--ok)"></i>
+    <i style="width:${w(c.Shaky)}%;background:var(--shaky)"></i>
+    <i style="width:${w(c.Wrong)}%;background:var(--bad)"></i>
+  </div>`;
 }
+const badge = (n, cls) => n ? `<span class="badge num ${cls}">${n}</span>` : `<span class="b-zero num">0</span>`;
+
 function renderDash() {
   const c = counts(Q);
-  const today = new Date().toISOString().slice(0,10);
+  const today = new Date().toISOString().slice(0, 10);
   const doneToday = Q.filter((q) => q.last_attempted === today).length;
-  const pct = c.total ? ((c.Solved / c.total) * 100).toFixed(1) : 0;
+  const pct = c.total ? ((c.Solved / c.total) * 100).toFixed(1) : "0.0";
+  const needs = c.Wrong + c.Shaky;
+
+  $("#hero").innerHTML = `
+    <div>
+      <div class="hero-top">
+        <span class="hero-pct num">${pct}%</span>
+        <span class="hero-sub num"><b>${c.Solved.toLocaleString()}</b> of ${c.total.toLocaleString()} solved · <b>${doneToday}</b> attempted today</span>
+      </div>
+      ${bar(c, "hero-bar")}
+      <div class="legend num">
+        <span><i class="dot" style="background:var(--ok)"></i>Solved: <b>${c.Solved}</b></span>
+        <span><i class="dot" style="background:var(--shaky)"></i>Shaky: <b>${c.Shaky}</b></span>
+        <span><i class="dot" style="background:var(--bad)"></i>Wrong: <b>${c.Wrong}</b></span>
+        <span><i class="dot" style="background:var(--un)"></i>Unsolved: <b>${c.Unsolved}</b></span>
+      </div>
+    </div>
+    <div class="hero-actions">
+      <button class="quick-btn warn" id="qaNeeds">⚡ Review Wrong &amp; Shaky <span class="cnt num">${needs}</span></button>
+      <button class="quick-btn starb" id="qaImp">★ Starred Pending <span class="cnt num">${c.imp}</span></button>
+      <button class="quick-btn primary" id="qaStart">Practice Unsolved →</button>
+    </div>`;
+
+  $("#qaNeeds").onclick = () => openFiltered({ status: "needs" });
+  $("#qaImp").onclick = () => openFiltered({ imp: true });
+  $("#qaStart").onclick = () => openFiltered({ status: "Unsolved" });
+
   $("#cards").innerHTML = [
-    ["Total", c.total], ["Solved", c.Solved], ["Wrong", c.Wrong], ["Shaky", c.Shaky],
-    ["Unsolved", c.Unsolved], ["% Solved", pct + "%"], ["★ pending", c.imp], ["Attempted today", doneToday],
-  ].map(([k, v]) => `<div class="card"><b>${v}</b><span>${k}</span></div>`).join("");
+    ["Solved", c.Solved, "var(--ok)", { status: "Solved" }],
+    ["Shaky", c.Shaky, "var(--shaky)", { status: "Shaky" }],
+    ["Wrong", c.Wrong, "var(--bad)", { status: "Wrong" }],
+    ["Unsolved", c.Unsolved, "var(--mut)", { status: "Unsolved" }],
+    ["★ Pending", c.imp, "var(--star)", { imp: true }],
+    ["Today", doneToday, "var(--acc-hover)", null],
+  ].map(([k, v, col, flt], idx) => `
+    <div class="stat-card" data-stat-idx="${idx}">
+      <div class="lbl"><span>${k}</span><i class="dot" style="background:${col}"></i></div>
+      <div class="val num" style="color:${col}">${v.toLocaleString()}</div>
+    </div>`).join("");
+
+  const statFilters = [{ status: "Solved" }, { status: "Shaky" }, { status: "Wrong" }, { status: "Unsolved" }, { imp: true }, null];
+  $("#cards").querySelectorAll(".stat-card").forEach((el) => {
+    const flt = statFilters[Number(el.dataset.statIdx)];
+    if (flt) el.onclick = () => openFiltered(flt);
+  });
+
+  // Group into Core CS and Maths
   const subs = {};
-  Q.forEach((q) => (subs[q.subject] ||= []).push(q));
-  $("#subj").innerHTML = Object.entries(subs).map(([s, l]) => {
-    const k = counts(l);
-    return `<tr class="sub" data-s="${esc(s)}"><td>${esc(s)}</td><td>${k.total}</td><td>${k.Solved}</td><td>${k.Wrong}</td><td>${k.Shaky}</td><td>${k.Unsolved}</td><td>${((k.Solved/k.total)*100).toFixed(0)}%</td><td class="hide-sm">${bar(k)}</td><td>${k.imp}</td></tr>`;
+  for (const q of Q) (subs[q.subject] ||= []).push(q);
+  const groups = [
+    ["Core CS", Object.entries(subs).filter(([s]) => !isMaths(s))],
+    ["Engineering & Discrete Maths", Object.entries(subs).filter(([s]) => isMaths(s))],
+  ];
+
+  $("#subjGroups").innerHTML = groups.map(([title, entries]) => {
+    const gc = counts(entries.flatMap(([, l]) => l));
+    const gpct = gc.total ? ((gc.Solved / gc.total) * 100).toFixed(1) : "0.0";
+    return `
+      <div class="grp-hdr">
+        <h2>${title}</h2>
+        <span class="grp-meta num">${gc.Solved} / ${gc.total} solved (${gpct}%)</span>
+      </div>
+      <div class="card-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Total</th>
+              <th>Solved</th>
+              <th class="hide-sm">Wrong</th>
+              <th class="hide-sm">Shaky</th>
+              <th class="hide-md">Unsolved</th>
+              <th>%</th>
+              <th class="hide-sm">Progress</th>
+              <th>★</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${entries.map(([s, l]) => {
+              const k = counts(l);
+              const p = k.total ? Math.round((k.Solved / k.total) * 100) : 0;
+              return `<tr class="clickable" data-s="${esc(s)}">
+                <td class="subj-name">${esc(s)}</td>
+                <td class="num">${k.total}</td>
+                <td>${badge(k.Solved, "b-ok")}</td>
+                <td class="hide-sm">${badge(k.Wrong, "b-bad")}</td>
+                <td class="hide-sm">${badge(k.Shaky, "b-shaky")}</td>
+                <td class="hide-md num" style="color:var(--mut)">${k.Unsolved}</td>
+                <td class="num" style="font-weight:600">${p}%</td>
+                <td class="hide-sm">${bar(k)}</td>
+                <td>${badge(k.imp, "b-star")}</td>
+              </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>`;
   }).join("");
+
+  $("#subjGroups").querySelectorAll("tr.clickable").forEach((tr) => {
+    tr.onclick = () => openFiltered({ subject: tr.dataset.s });
+  });
 }
-$("#subj").onclick = (e) => {
-  const tr = e.target.closest("tr"); if (!tr) return;
-  $("#fSubject").value = tr.dataset.s; fillTopics(); $("#fTopic").value = ""; page = 0; switchView("list");
-};
+
+function renderTopics() {
+  const q = $("#tSearch").value.trim().toLowerCase();
+  const sF = $("#tSubj").value;
+  const sort = $("#tSort").value;
+  const map = new Map();
+  for (const x of Q) {
+    if (sF && x.subject !== sF) continue;
+    const key = x.subject + "||" + x.topic;
+    if (!map.has(key)) map.set(key, { subject: x.subject, topic: x.topic, list: [] });
+    map.get(key).list.push(x);
+  }
+  let rows = [...map.values()].filter((r) => !q || `${r.topic} ${r.subject}`.toLowerCase().includes(q))
+    .map((r) => ({ ...r, c: counts(r.list) }));
+  if (sort === "total") rows.sort((a, b) => b.c.total - a.c.total);
+  else if (sort === "unsolved") rows.sort((a, b) => b.c.Unsolved - a.c.Unsolved);
+  else if (sort === "pct-asc") rows.sort((a, b) => (a.c.Solved / a.c.total) - (b.c.Solved / b.c.total));
+  else if (sort === "pct-desc") rows.sort((a, b) => (b.c.Solved / b.c.total) - (a.c.Solved / a.c.total));
+
+  $("#topicRows").innerHTML = rows.length ? rows.map((r) => {
+    const p = Math.round((r.c.Solved / r.c.total) * 100);
+    return `<tr class="clickable" data-s="${esc(r.subject)}" data-t="${esc(r.topic)}">
+      <td class="subj-name">${esc(r.topic)}</td>
+      <td class="hide-sm" style="color:var(--mut)">${esc(r.subject)}</td>
+      <td class="num">${r.c.total}</td>
+      <td>${badge(r.c.Solved, "b-ok")}</td>
+      <td class="hide-sm">${badge(r.c.Wrong, "b-bad")}</td>
+      <td class="hide-sm">${badge(r.c.Shaky, "b-shaky")}</td>
+      <td class="num" style="font-weight:600">${p}%</td>
+      <td class="hide-md">${bar(r.c)}</td>
+    </tr>`;
+  }).join("") : `<tr><td colspan="8" class="empty">No matching topics</td></tr>`;
+
+  $("#topicRows").querySelectorAll("tr.clickable").forEach((tr) => {
+    tr.onclick = () => openFiltered({ subject: tr.dataset.s, topic: tr.dataset.t });
+  });
+}
+
+function openFiltered({ subject = "", topic = "", status = "", imp = false } = {}) {
+  $("#q").value = "";
+  $("#fSubject").value = subject;
+  fillTopics();
+  $("#fTopic").value = topic;
+  $("#fVol").value = "";
+  $("#fStatus").value = status;
+  $("#fDiff").value = "";
+  impOnly = imp;
+  syncChips();
+  page = 0;
+  switchView("list");
+}
+
+let impOnly = false;
+function syncChips() {
+  $("#chipImp").classList.toggle("on-star", impOnly);
+  $("#chipNeeds").classList.toggle("on-warn", $("#fStatus").value === "needs");
+  $("#chipUnsolved").classList.toggle("on", $("#fStatus").value === "Unsolved");
+}
 
 function filtered() {
-  const q = $("#q").value.trim().toLowerCase(), s = $("#fSubject").value, t = $("#fTopic").value,
-        v = $("#fVol").value, st = $("#fStatus").value, d = $("#fDiff").value, imp = $("#fImp").checked;
+  const q = $("#q").value.trim().toLowerCase(),
+        s = $("#fSubject").value, t = $("#fTopic").value,
+        v = $("#fVol").value, st = $("#fStatus").value, d = $("#fDiff").value;
   return Q.filter((x) =>
     (!s || x.subject === s) && (!t || x.topic === t) && (!v || x.volume === v) &&
     (!st || (st === "needs" ? (x.status === "Wrong" || x.status === "Shaky") : x.status === st)) &&
-    (!d || (d === "none" ? !x.difficulty : x.difficulty === d)) && (!imp || x.important) &&
+    (!d || (d === "none" ? !x.difficulty : x.difficulty === d)) &&
+    (!impOnly || x.important) &&
     (!q || `${x.qid} ${x.topic} ${x.exam} ${x.notes} ${x.subject}`.toLowerCase().includes(q)));
 }
+
 function renderList() {
+  syncChips();
   const f = filtered();
   const pages = Math.max(1, Math.ceil(f.length / PAGE));
   page = Math.min(page, pages - 1);
-  $("#count").textContent = `${f.length} questions`;
-  $("#pg").textContent = `Page ${page + 1} / ${pages}`;
-  $("#rows").innerHTML = f.slice(page * PAGE, page * PAGE + PAGE).map((x) => `
+  const start = page * PAGE, slice = f.slice(start, start + PAGE);
+  $("#count").textContent = `${f.length.toLocaleString()} question${f.length === 1 ? "" : "s"}`;
+  $("#pageRange").textContent = f.length ? `Showing ${start + 1}–${start + slice.length}` : "";
+  $("#pg").textContent = `Page ${page + 1} of ${pages}`;
+  $("#prev").disabled = page === 0;
+  $("#next").disabled = page >= pages - 1;
+
+  $("#rows").innerHTML = slice.length ? slice.map((x) => `
     <tr data-id="${x.id}">
-      <td><b>${esc(x.qid)}</b></td><td>${esc(x.volume.replace("Vol ","V"))}</td>
-      <td class="hide-sm">${esc(x.topic)}</td><td class="mut">${esc(x.exam)}</td><td>${x.pdf_page ? `<a class="pdfl" target="_blank" href="/viewer.html?vol=${x.volume === "Vol 1" ? "vol1" : "vol2"}&page=${x.pdf_page}" title="Open in PDF">📄 ${x.pdf_page}</a>` : ""}</td>
-      <td class="hide-sm">${x.difficulty ? `<span class="pill">${esc(x.difficulty)}</span>` : ""}</td>
-      <td><div class="st">${STAT.map((s) => `<button class="${s} ${x.status===s?"sel":""}" data-st="${s}" title="${s}">${s[0]}</button>`).join("")}</div></td>
-      <td><button class="star ${x.important?"on":""}">★</button></td>
-      <td class="hide-sm mut">${x.last_attempted ?? ""}</td>
-      <td><textarea class="note" placeholder="…">${esc(x.notes)}</textarea></td>
-    </tr>`).join("");
+      <td class="qid">${esc(x.qid)}</td>
+      <td><span class="vol-tag">${esc(x.volume.replace("Vol ", "V"))}</span></td>
+      <td class="topic-cell">${esc(x.topic)}<small>${esc(x.subject)}</small></td>
+      <td class="hide-md exam-cell">${esc(x.exam)}</td>
+      <td>${x.pdf_page ? `<a class="pdfl num" target="_blank" href="/viewer.html?vol=${x.volume === "Vol 1" ? "vol1" : "vol2"}&page=${x.pdf_page}" title="Open PDF at page ${x.pdf_page}">📄 ${x.pdf_page}</a>` : ""}</td>
+      <td class="hide-md">${x.difficulty ? `<span class="diff diff-${esc(x.difficulty)}">${esc(x.difficulty)}</span>` : ""}</td>
+      <td>
+        <div class="st">
+          ${STAT.map((s) => `<button class="${s} ${x.status === s ? "sel" : ""}" data-st="${s}" title="${s}">${STAT_LABEL[s]}</button>`).join("")}
+        </div>
+      </td>
+      <td><button class="star ${x.important ? "on" : ""}" title="Toggle starred">★</button></td>
+      <td class="hide-md num" style="color:var(--mut);font-size:12px;white-space:nowrap">${x.last_attempted ?? ""}</td>
+      <td><textarea class="note" placeholder="Add note…">${esc(x.notes)}</textarea></td>
+    </tr>`).join("") : `<tr><td colspan="10" class="empty">No questions match these filters.</td></tr>`;
 }
 
 async function update(id, body) {
   const q = Q.find((x) => x.id === id);
+  const snap = { status: q.status, important: q.important, notes: q.notes, last_attempted: q.last_attempted };
+  Object.assign(q, body);
+  if (body.status && body.status !== "Unsolved") q.last_attempted = new Date().toISOString().slice(0, 10);
+  renderDash();
+  if (currentView === "list") renderList();
   try {
-    const r = await api(`/api/questions/${id}`, { method:"PATCH", body: JSON.stringify(body) });
-    Object.assign(q, r); toast("Saved"); renderDash(); renderList();
-  } catch (e) { if (e.message !== "auth") toast("Save failed: " + e.message); }
+    const r = await api(`/api/questions/${id}`, { method: "PATCH", body: JSON.stringify(body) });
+    Object.assign(q, r);
+    toast("Saved ✓");
+    renderDash();
+  } catch (e) {
+    Object.assign(q, snap);
+    renderAll();
+    if (e.message !== "auth") toast("Save failed: " + e.message);
+  }
 }
+
 $("#rows").onclick = (e) => {
   const tr = e.target.closest("tr"); if (!tr) return;
   const id = Number(tr.dataset.id);
@@ -206,19 +859,30 @@ $("#rows").addEventListener("change", (e) => {
   update(Number(e.target.closest("tr").dataset.id), { notes: e.target.value });
 });
 
-["#q","#fTopic","#fVol","#fStatus","#fDiff","#fImp"].forEach((s) => $(s).addEventListener("input", () => { page = 0; renderList(); }));
+["#q", "#fTopic", "#fVol", "#fStatus", "#fDiff"].forEach((s) => $(s).addEventListener("input", () => { page = 0; renderList(); }));
 $("#fSubject").addEventListener("input", () => { fillTopics(); $("#fTopic").value = ""; page = 0; renderList(); });
-$("#clear").onclick = () => { ["#q","#fSubject","#fVol","#fStatus","#fDiff"].forEach((s) => ($(s).value = "")); $("#fImp").checked = false; fillTopics(); page = 0; renderList(); };
-$("#prev").onclick = () => { if (page > 0) { page--; renderList(); scrollTo(0,0); } };
-$("#next").onclick = () => { page++; renderList(); scrollTo(0,0); };
+["#tSearch", "#tSubj", "#tSort"].forEach((s) => $(s).addEventListener("input", renderTopics));
+
+$("#chipImp").onclick = () => { impOnly = !impOnly; page = 0; renderList(); };
+$("#chipNeeds").onclick = () => { $("#fStatus").value = $("#fStatus").value === "needs" ? "" : "needs"; page = 0; renderList(); };
+$("#chipUnsolved").onclick = () => { $("#fStatus").value = $("#fStatus").value === "Unsolved" ? "" : "Unsolved"; page = 0; renderList(); };
+$("#clear").onclick = () => {
+  ["#q", "#fSubject", "#fVol", "#fStatus", "#fDiff"].forEach((s) => ($(s).value = ""));
+  impOnly = false; fillTopics(); $("#fTopic").value = ""; page = 0; renderList();
+};
+$("#prev").onclick = () => { if (page > 0) { page--; renderList(); scrollTo({ top: 0, behavior: "smooth" }); } };
+$("#next").onclick = () => { page++; renderList(); scrollTo({ top: 0, behavior: "smooth" }); };
 
 function switchView(v) {
+  currentView = v;
   document.querySelectorAll("[data-view]").forEach((b) => b.classList.toggle("on", b.dataset.view === v));
-  $("#dash").classList.toggle("hidden", v !== "dash"); $("#list").classList.toggle("hidden", v !== "list");
+  ["dash", "topics", "list"].forEach((id) => $("#" + id).classList.toggle("hidden", id !== v));
+  if (v === "topics") renderTopics();
   if (v === "list") renderList();
 }
 document.querySelectorAll("[data-view]").forEach((b) => (b.onclick = () => switchView(b.dataset.view)));
-// refresh when coming back to the tab (picks up changes made on the other laptop)
+
+// Refresh when coming back to the tab (picks up changes from the other laptop)
 document.addEventListener("visibilitychange", () => { if (!document.hidden && Q.length) load().catch(() => {}); });
 
 load().catch(() => {});

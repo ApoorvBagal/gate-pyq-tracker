@@ -5,66 +5,222 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>PDF · GATE PYQ</title>
 <style>
-  :root { --bg:#0f1220; --card:#181c2e; --line:#2a2f48; --fg:#e6e8f2; --mut:#8b90a8; --acc:#6c8cff;
-          --ok:#3ecf8e; --bad:#ff6b6b; --shaky:#f5b041; --un:#5b6078; }
-  * { box-sizing:border-box; }
-  html, body { margin:0; height:100%; background:#3a3d4a; color:var(--fg); font:14px/1.4 system-ui,Segoe UI,sans-serif; }
-  #bar { position:fixed; top:0; left:0; right:0; z-index:10; display:flex; flex-wrap:wrap; gap:6px; align-items:center;
-         padding:6px 10px; background:var(--bg); border-bottom:1px solid var(--line); }
-  #bar .grp { display:flex; gap:3px; align-items:center; padding-right:8px; border-right:1px solid var(--line); }
-  button, input { font:inherit; color:var(--fg); background:var(--card); border:1px solid var(--line); border-radius:6px; padding:4px 9px; }
-  button { cursor:pointer; } button.on { background:var(--acc); border-color:var(--acc); color:#fff; }
-  button:disabled { opacity:.4; cursor:default; }
-  input#pg { width:62px; text-align:center; }
-  .sw { width:14px; height:14px; border-radius:50%; display:inline-block; vertical-align:-2px; }
-  #sync { font-size:12px; color:var(--mut); min-width:110px; }
-  #sync.err { color:var(--bad); } #sync.ok { color:var(--ok); }
-  a { color:var(--acc); text-decoration:none; }
-  #pages { position:absolute; top:var(--barh,46px); bottom:var(--qh,0px); left:0; right:0; overflow:auto; }
-  .page { position:relative; margin:10px auto; background:#fff; box-shadow:0 2px 8px #0006; }
-  .page canvas { position:absolute; inset:0; width:100%; height:100%; }
-  .page .num { position:absolute; left:-46px; top:4px; color:#aab; font-size:12px; }
-  .ink { pointer-events:none; }
-  #pages.draw .ink { pointer-events:auto; touch-action:none; cursor:crosshair; }
-  #pages.erase .ink { pointer-events:auto; touch-action:none; cursor:cell; }
-  #qbar { position:fixed; bottom:0; left:0; right:0; background:var(--bg); border-top:1px solid var(--line);
-          padding:5px 10px; display:flex; gap:14px; flex-wrap:wrap; align-items:center; font-size:13px; z-index:10; }
-  #qbar:empty { display:none; }
-  .q { display:flex; gap:4px; align-items:center; }
-  .q .st button { padding:1px 6px; font-size:12px; opacity:.45; }
-  .q .st button.sel { opacity:1; color:#111; font-weight:600; }
-  .st .Solved.sel { background:var(--ok); } .st .Wrong.sel { background:var(--bad); }
-  .st .Shaky.sel { background:var(--shaky); } .st .Unsolved.sel { background:var(--un); color:#fff; }
-  .mut { color:var(--mut); }
-  #msg { position:absolute; top:40%; width:100%; text-align:center; color:#ddd; }
+  :root {
+    --bg: #0b0e17;
+    --bg-elev: #121726;
+    --card: #161c2e;
+    --hover: #1f2842;
+    --line: #232b42;
+    --line-strong: #344061;
+    --fg: #eef1f8;
+    --mut: #8490b0;
+    --acc: #6366f1;
+    --acc-soft: rgba(99, 102, 241, 0.18);
+    --ok: #22c55e;
+    --bad: #ef4444;
+    --shaky: #f59e0b;
+    --un: #475569;
+    --star: #facc15;
+    --canvas-bg: #1e2330;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%;
+    background: var(--canvas-bg); color: var(--fg);
+    font: 13.5px/1.4 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* Top toolbar */
+  #bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    padding: 7px 12px;
+    background: color-mix(in srgb, var(--bg-elev) 92%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  #bar .grp {
+    display: inline-flex; gap: 3px; align-items: center;
+    background: var(--bg); padding: 3px; border-radius: 9px;
+    border: 1px solid var(--line);
+  }
+  #bar .grp.plain { background: transparent; border: none; padding: 0; gap: 6px; }
+  button, input {
+    font: inherit; color: var(--fg); background: transparent;
+    border: 1px solid transparent; border-radius: 6px; padding: 4px 8px;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  button { cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-weight: 500; }
+  button:hover:not(:disabled) { background: var(--hover); }
+  button.on { background: var(--acc); color: #fff; }
+  button.on:hover { background: var(--acc); }
+  button.solid { background: var(--card); border-color: var(--line); }
+  button.solid:hover:not(:disabled) { border-color: var(--line-strong); background: var(--hover); }
+  button:disabled { opacity: .35; cursor: default; }
+
+  input#pg {
+    width: 54px; text-align: center; background: var(--card);
+    border: 1px solid var(--line); padding: 3px 4px; font-variant-numeric: tabular-nums;
+  }
+  input#pg:focus { outline: none; border-color: var(--acc); }
+
+  .sw { width: 14px; height: 14px; border-radius: 50%; display: inline-block; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25); }
+  .sz-dot { border-radius: 50%; background: currentColor; display: inline-block; }
+
+  .back-link {
+    color: var(--fg); text-decoration: none; font-weight: 600;
+    padding: 5px 9px; border-radius: 7px; background: var(--card); border: 1px solid var(--line);
+  }
+  .back-link:hover { background: var(--hover); border-color: var(--line-strong); }
+
+  .vol-sw { display: inline-flex; background: var(--bg); padding: 2px; border-radius: 8px; border: 1px solid var(--line); }
+  .vol-sw a {
+    text-decoration: none; color: var(--mut); padding: 3px 9px; border-radius: 6px; font-size: 12.5px; font-weight: 600;
+  }
+  .vol-sw a.on { background: var(--card); color: var(--fg); }
+
+  .spacer { flex: 1; }
+
+  #sync {
+    font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 99px;
+    background: var(--card); border: 1px solid var(--line); color: var(--mut);
+    white-space: nowrap;
+  }
+  #sync.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 35%, var(--line)); }
+  #sync.err { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, var(--line)); }
+  #sync.busy { color: var(--shaky); border-color: color-mix(in srgb, var(--shaky) 40%, var(--line)); }
+
+  /* Pages area */
+  #pages {
+    position: absolute; top: var(--barh, 50px); bottom: var(--qh, 0px);
+    left: 0; right: 0; overflow: auto; padding: 12px 16px 32px;
+  }
+  .page {
+    position: relative; margin: 14px auto; background: #fff;
+    border-radius: 4px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  }
+  .page canvas { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 4px; }
+  .page .num-tag {
+    position: absolute; left: 8px; top: 8px; z-index: 3; pointer-events: none;
+    background: rgba(11, 14, 23, 0.65); color: #eef1f8;
+    font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 99px;
+    font-variant-numeric: tabular-nums;
+  }
+  .ink { pointer-events: none; }
+  #pages.draw .ink { pointer-events: auto; touch-action: none; cursor: crosshair; }
+  #pages.erase .ink { pointer-events: auto; touch-action: none; cursor: cell; }
+
+  /* Bottom question bar */
+  #qbar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+    background: color-mix(in srgb, var(--bg-elev) 95%, transparent);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line);
+    padding: 7px 14px;
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+    font-size: 13px;
+  }
+  #qbar:empty { display: none; }
+  .q-pill {
+    display: inline-flex; gap: 6px; align-items: center;
+    background: var(--card); border: 1px solid var(--line);
+    padding: 4px 8px; border-radius: 9px;
+  }
+  .q-pill b { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+  .q-pill .st { display: inline-flex; gap: 2px; background: var(--bg); padding: 2px; border-radius: 6px; }
+  .q-pill .st button { padding: 2px 6px; font-size: 11.5px; font-weight: 600; color: var(--mut); border-radius: 4px; }
+  .q-pill .st button.sel { color: #fff; }
+  .st .Solved.sel { background: var(--ok); color: #052e16; }
+  .st .Wrong.sel { background: var(--bad); color: #fff; }
+  .st .Shaky.sel { background: var(--shaky); color: #451a03; }
+  .st .Unsolved.sel { background: var(--un); color: #fff; }
+  .q-pill .q-star { padding: 1px 4px; font-size: 15px; color: var(--line-strong); }
+  .q-pill .q-star.on { color: var(--star); }
+  .q-pill .q-note-in {
+    width: 140px; padding: 2px 6px; font-size: 12px;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 5px;
+  }
+  .q-pill .q-note-in:focus { outline: none; border-color: var(--acc); width: 220px; }
+
+  .mut { color: var(--mut); font-size: 12px; }
+  #msg { position: absolute; top: 42%; width: 100%; text-align: center; color: #cbd5e1; font-size: 15px; }
+
+  /* Help popover */
+  #helpPop {
+    position: fixed; top: 56px; right: 14px; z-index: 30;
+    background: var(--card); border: 1px solid var(--line-strong);
+    border-radius: 12px; padding: 12px 14px; width: 240px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.45); font-size: 12.5px;
+  }
+  #helpPop.hidden { display: none; }
+  #helpPop h4 { margin: 0 0 8px; font-size: 13px; }
+  #helpPop div { display: flex; justify-content: space-between; padding: 3px 0; color: var(--mut); }
+  #helpPop kbd { background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; color: var(--fg); font-family: inherit; font-size: 11px; }
 </style>
 </head>
 <body>
 <div id="bar">
-  <div class="grp"><a href="/">← Tracker</a>&nbsp;<b id="volname"></b></div>
-  <div class="grp">
-    <button id="prevp" title="Previous page">‹</button>
-    <input id="pg" /> <span class="mut" id="pgtot"></span>
-    <button id="nextp" title="Next page">›</button>
+  <div class="grp plain">
+    <a class="back-link" href="/">← Tracker</a>
+    <div class="vol-sw">
+      <a href="?vol=vol1&page=1" id="v1link">Vol 1</a>
+      <a href="?vol=vol2&page=1" id="v2link">Vol 2</a>
+    </div>
   </div>
+
   <div class="grp">
-    <button id="zout" title="Zoom out">−</button><span id="zl" class="mut">100%</span><button id="zin" title="Zoom in">+</button>
+    <button id="prevp" title="Previous page (←)">‹</button>
+    <input id="pg" aria-label="Page number" />
+    <span class="mut num" id="pgtot" style="padding:0 4px"></span>
+    <button id="nextp" title="Next page (→)">›</button>
   </div>
+
+  <div class="grp">
+    <button id="zout" title="Zoom out">−</button>
+    <button id="zfit" title="Reset zoom to fit width"><span id="zl" class="num">100%</span></button>
+    <button id="zin" title="Zoom in">+</button>
+  </div>
+
   <div class="grp" id="tools">
-    <button data-tool="hand" class="on" title="Scroll / read (V)">✋</button>
-    <button data-tool="pen" data-color="#1f5fff" title="Blue pen (P)"><span class="sw" style="background:#1f5fff"></span></button>
-    <button data-tool="pen" data-color="#e0245e" title="Red pen"><span class="sw" style="background:#e0245e"></span></button>
-    <button data-tool="pen" data-color="#14a44d" title="Green pen"><span class="sw" style="background:#14a44d"></span></button>
-    <button data-tool="hl" data-color="#ffe14d" title="Highlighter (H)">🖍</button>
+    <button data-tool="hand" class="on" title="Scroll / Read (V)">✋</button>
+    <button data-tool="pen" data-color="#2563eb" title="Blue pen (P)"><span class="sw" style="background:#2563eb"></span></button>
+    <button data-tool="pen" data-color="#e11d48" title="Red pen"><span class="sw" style="background:#e11d48"></span></button>
+    <button data-tool="pen" data-color="#16a34a" title="Green pen"><span class="sw" style="background:#16a34a"></span></button>
+    <button data-tool="hl" data-color="#facc15" title="Highlighter (H)">🖍</button>
     <button data-tool="erase" title="Eraser (E)">⌫</button>
   </div>
+
+  <div class="grp" id="sizes" title="Pen thickness">
+    <button data-sz="0.0016" title="Fine"><span class="sz-dot" style="width:4px;height:4px"></span></button>
+    <button data-sz="0.0024" class="on" title="Medium"><span class="sz-dot" style="width:7px;height:7px"></span></button>
+    <button data-sz="0.0040" title="Bold"><span class="sz-dot" style="width:10px;height:10px"></span></button>
+  </div>
+
   <div class="grp">
     <button id="undo" title="Undo (Ctrl+Z)" disabled>↶</button>
     <button id="redo" title="Redo (Ctrl+Y)" disabled>↷</button>
+    <button id="clearPg" title="Clear marks on current page">🗑</button>
   </div>
-  <span id="sync" class="ok">Saved</span>
-  <button id="dl" title="Download PDF with your marks baked in">⬇ Annotated PDF</button>
+
+  <div class="spacer"></div>
+
+  <span id="sync" class="ok">Saved ✓</span>
+  <button id="dl" class="solid" title="Download PDF with your marks baked in">⬇ Annotated PDF</button>
+  <button id="helpBtn" class="solid" title="Keyboard shortcuts">?</button>
 </div>
+
+<div id="helpPop" class="hidden">
+  <h4>Shortcuts</h4>
+  <div><span>Scroll / Hand</span><kbd>V</kbd></div>
+  <div><span>Pen</span><kbd>P</kbd></div>
+  <div><span>Highlighter</span><kbd>H</kbd></div>
+  <div><span>Eraser</span><kbd>E</kbd></div>
+  <div><span>Undo / Redo</span><span><kbd>Ctrl+Z</kbd> <kbd>Ctrl+Y</kbd></span></div>
+  <div><span>Prev / Next page</span><span><kbd>[</kbd> <kbd>]</kbd></span></div>
+</div>
+
 <div id="pages"><div id="msg">Loading PDF…</div></div>
 <div id="qbar"></div>
 
@@ -77,9 +233,12 @@ const params = new URLSearchParams(location.search);
 const VOL = ["vol1", "vol2"].includes(params.get("vol")) ? params.get("vol") : "vol1";
 const VOLNAME = VOL === "vol1" ? "Vol 1" : "Vol 2";
 const DPR = Math.min(window.devicePixelRatio || 1, 2);
-const PEN_W = 0.0022, HL_W = 0.014;   // stroke widths as fraction of page width
+const HL_W = 0.015;
 const STAT = ["Unsolved", "Solved", "Wrong", "Shaky"];
-$("#volname").textContent = VOLNAME;
+const STAT_LABEL = { Unsolved: "U", Solved: "S", Wrong: "W", Shaky: "K" };
+
+$("#v1link").classList.toggle("on", VOL === "vol1");
+$("#v2link").classList.toggle("on", VOL === "vol2");
 document.title = `${VOLNAME} · GATE PYQ`;
 
 const pagesEl = $("#pages");
@@ -92,10 +251,10 @@ new ResizeObserver(fixLayout).observe($("#qbar"));
 
 // ---------- state ----------
 let doc, N, baseW, baseH, fitScale = 1, zoom = 1, cur = 1;
-const sizes = {};            // page -> [w,h] at scale 1
-const pageEls = [];          // index page-1 -> {el, pdf, ink, task, rendered}
-let ann = {};                // page -> strokes[]
-let tool = "hand", color = "#1f5fff";
+const sizes = {};
+const pageEls = [];
+let ann = {};
+let tool = "hand", color = "#2563eb", penW = 0.0024;
 const undoStack = [], redoStack = [];
 const PKEY = `gate-pending-${VOL}`;
 let pending = JSON.parse(localStorage.getItem(PKEY) || "{}");
@@ -103,16 +262,19 @@ let questions = [];
 
 // ---------- load ----------
 async function main() {
-  const [annRes] = await Promise.all([fetch(`/api/annotations/${VOL}`)]);
+  const annRes = await fetch(`/api/annotations/${VOL}`);
   if (annRes.status === 401) { location.href = "/"; return; }
   ann = await annRes.json();
-  Object.assign(ann, pending);                  // unsynced local edits win
-  fetch("/api/questions").then((r) => r.json()).then((q) => { questions = q.filter((x) => x.volume === VOLNAME); renderQ(); }).catch(() => {});
+  Object.assign(ann, pending);
+  fetch("/api/questions").then((r) => r.json()).then((q) => {
+    questions = q.filter((x) => x.volume === VOLNAME);
+    renderQ();
+  }).catch(() => {});
 
   try {
     doc = await pdfjsLib.getDocument({ url: `/pdf/${VOL}`, withCredentials: true }).promise;
   } catch (e) {
-    $("#msg").textContent = "Could not load PDF: " + (e.message || e) + " (has it been uploaded?)";
+    $("#msg").textContent = "Could not load PDF: " + (e.message || e);
     return;
   }
   N = doc.numPages;
@@ -125,7 +287,7 @@ async function main() {
   for (let i = 1; i <= N; i++) {
     const el = document.createElement("div");
     el.className = "page"; el.dataset.page = i;
-    el.innerHTML = `<span class="num">${i}</span>`;
+    el.innerHTML = `<span class="num-tag">${i}</span>`;
     const pdf = document.createElement("canvas"), ink = document.createElement("canvas");
     pdf.className = "pdf"; ink.className = "ink";
     el.append(pdf, ink);
@@ -139,8 +301,8 @@ async function main() {
 }
 
 function computeFit() {
-  const avail = pagesEl.clientWidth - 60;
-  fitScale = Math.max(0.3, Math.min(avail / baseW, 1.6));
+  const avail = pagesEl.clientWidth - 48;
+  fitScale = Math.max(0.35, Math.min(avail / baseW, 1.55));
 }
 const scale = () => fitScale * zoom;
 function pageCss(i) {
@@ -187,7 +349,7 @@ async function renderPage(i) {
   p.ink.width = Math.round(w * DPR); p.ink.height = Math.round(h * DPR);
   drawInk(i);
   p.task = page.render({ canvasContext: p.pdf.getContext("2d"), viewport: vp });
-  try { await p.task.promise; } catch (_) { /* cancelled */ }
+  try { await p.task.promise; } catch (_) {}
   p.task = null;
 }
 function unrender(i) {
@@ -198,7 +360,7 @@ function unrender(i) {
   p.rendered = false;
 }
 
-// ---------- ink ----------
+// ---------- smooth ink ----------
 function drawStroke(ctx, s, W, H) {
   ctx.save();
   ctx.lineCap = "round"; ctx.lineJoin = "round";
@@ -208,8 +370,18 @@ function drawStroke(ctx, s, W, H) {
   ctx.beginPath();
   const p = s.p;
   ctx.moveTo(p[0] * W, p[1] * H);
-  if (p.length === 2) ctx.lineTo(p[0] * W + 0.01, p[1] * H);
-  for (let k = 2; k < p.length; k += 2) ctx.lineTo(p[k] * W, p[k + 1] * H);
+  if (p.length === 2) {
+    ctx.lineTo(p[0] * W + 0.01, p[1] * H);
+  } else if (p.length === 4) {
+    ctx.lineTo(p[2] * W, p[3] * H);
+  } else {
+    for (let k = 2; k < p.length - 2; k += 2) {
+      const mx = ((p[k] + p[k + 2]) / 2) * W;
+      const my = ((p[k + 1] + p[k + 3]) / 2) * H;
+      ctx.quadraticCurveTo(p[k] * W, p[k + 1] * H, mx, my);
+    }
+    ctx.lineTo(p[p.length - 2] * W, p[p.length - 1] * H);
+  }
   ctx.stroke();
   ctx.restore();
 }
@@ -228,7 +400,7 @@ function bindInk(i, ink) {
   const norm = (e) => { const r = ink.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height, r]; };
   const eraseAt = (e) => {
     const [x, y, r] = norm(e);
-    const tol = 10;
+    const tol = 11;
     const list = ann[i] || [];
     const keep = list.filter((s) => {
       for (let k = 0; k < s.p.length; k += 2)
@@ -244,7 +416,7 @@ function bindInk(i, ink) {
     before = ann[i] || [];
     if (tool === "erase") { erased = false; eraseAt(e); return; }
     const [x, y] = norm(e);
-    stroke = { t: tool, c: color, w: tool === "hl" ? HL_W : PEN_W, p: [r4(x), r4(y)] };
+    stroke = { t: tool, c: color, w: tool === "hl" ? HL_W : penW, p: [r4(x), r4(y)] };
     drawInk(i, stroke);
   });
   ink.addEventListener("pointermove", (e) => {
@@ -278,9 +450,9 @@ function bindInk(i, ink) {
 function commit(i, before, after) {
   undoStack.push({ i, before, after }); redoStack.length = 0;
   if (undoStack.length > 200) undoStack.shift();
-  setPage(i, after, false);
+  setPage(i, after);
 }
-function setPage(i, strokes, push = true) {
+function setPage(i, strokes) {
   ann[i] = strokes; drawInk(i); markDirty(i); updUndo();
 }
 function undo() { const a = undoStack.pop(); if (!a) return; redoStack.push(a); setPage(a.i, a.before); goToIfFar(a.i); }
@@ -288,12 +460,18 @@ function redo() { const a = redoStack.pop(); if (!a) return; undoStack.push(a); 
 function updUndo() { $("#undo").disabled = !undoStack.length; $("#redo").disabled = !redoStack.length; }
 function goToIfFar(i) { if (Math.abs(i - cur) > 1) goTo(i); }
 
+$("#clearPg").onclick = () => {
+  const before = ann[cur] || [];
+  if (!before.length) return;
+  commit(cur, before, []);
+};
+
 // ---------- sync ----------
 let flushTimer = null, flushing = false;
 function markDirty(i) {
   pending[i] = ann[i];
   localStorage.setItem(PKEY, JSON.stringify(pending));
-  setSync("Saving…");
+  setSync("Saving…", "busy");
   clearTimeout(flushTimer); flushTimer = setTimeout(flush, 700);
 }
 function setSync(t, cls = "") { const s = $("#sync"); s.textContent = t; s.className = cls; }
@@ -301,14 +479,14 @@ async function flush() {
   if (flushing) return;
   const pages = Object.keys(pending);
   if (!pages.length) { setSync("Saved ✓", "ok"); return; }
-  if (!navigator.onLine) { setSync(`Offline · ${pages.length} page(s) unsaved`, "err"); return; }
-  flushing = true; setSync("Saving…");
+  if (!navigator.onLine) { setSync(`Offline · ${pages.length} unsaved`, "err"); return; }
+  flushing = true; setSync("Saving…", "busy");
   try {
     for (const pg of pages) {
       const strokes = pending[pg];
       const r = await fetch(`/api/annotations/${VOL}/${pg}`, {
         method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ strokes }) });
-      if (r.status === 401) { setSync("Logged out — open Tracker to log in", "err"); flushing = false; return; }
+      if (r.status === 401) { setSync("Logged out", "err"); flushing = false; return; }
       if (!r.ok) throw new Error(r.status);
       if (pending[pg] === strokes) delete pending[pg];
     }
@@ -318,14 +496,13 @@ async function flush() {
     setSync("Saved ✓", "ok");
   } catch (e) {
     flushing = false;
-    setSync(`Not saved · retrying`, "err");
+    setSync("Retrying…", "err");
     clearTimeout(flushTimer); flushTimer = setTimeout(flush, 5000);
   }
 }
 addEventListener("online", flush);
 addEventListener("offline", () => flush());
 addEventListener("beforeunload", (e) => { if (Object.keys(pending).length) { flush(); e.preventDefault(); e.returnValue = ""; } });
-// pick up marks made on the other laptop when coming back to this tab
 document.addEventListener("visibilitychange", async () => {
   if (document.hidden || Object.keys(pending).length || !doc) return;
   try {
@@ -366,6 +543,7 @@ function setZoom(z) {
 }
 $("#zin").onclick = () => setZoom(zoom + 0.15);
 $("#zout").onclick = () => setZoom(zoom - 0.15);
+$("#zfit").onclick = () => setZoom(1);
 let rzT; addEventListener("resize", () => { clearTimeout(rzT); rzT = setTimeout(() => { if (!N) return; const k = cur; computeFit(); layout(); goTo(k); }, 250); });
 
 // ---------- tools ----------
@@ -376,31 +554,54 @@ function setTool(btn) {
   pagesEl.classList.toggle("erase", tool === "erase");
 }
 document.querySelectorAll("#tools button").forEach((b) => (b.onclick = () => setTool(b)));
+document.querySelectorAll("#sizes button").forEach((b) => (b.onclick = () => {
+  document.querySelectorAll("#sizes button").forEach((x) => x.classList.toggle("on", x === b));
+  penW = Number(b.dataset.sz);
+}));
 $("#undo").onclick = undo; $("#redo").onclick = redo;
+$("#helpBtn").onclick = () => $("#helpPop").classList.toggle("hidden");
+document.addEventListener("click", (e) => {
+  if (!e.target.closest("#helpPop") && e.target !== $("#helpBtn")) $("#helpPop").classList.add("hidden");
+});
+
 addEventListener("keydown", (e) => {
-  if (e.target.tagName === "INPUT") return;
+  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); }
   else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); }
   else if (!e.ctrlKey && !e.metaKey) {
-    const k = { v: 'hand', p: 'pen', h: 'hl', e: 'erase' }[e.key.toLowerCase()];
+    if (e.key === "[") { goTo(cur - 1); return; }
+    if (e.key === "]") { goTo(cur + 1); return; }
+    const k = { v: "hand", p: "pen", h: "hl", e: "erase" }[e.key.toLowerCase()];
     if (k) setTool(document.querySelector(`#tools [data-tool="${k}"]`));
   }
 });
 
 // ---------- questions on current page ----------
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 function renderQ() {
   const here = questions.filter((q) => q.pdf_page === cur);
-  $("#qbar").innerHTML = here.length ? `<span class="mut">On this page:</span>` + here.map((q) => `
-    <span class="q" data-id="${q.id}"><b>${q.qid}</b>
-      <span class="st">${STAT.map((s) => `<button class="${s} ${q.status === s ? "sel" : ""}" data-st="${s}" title="${s}">${s[0]}</button>`).join("")}</span>
+  $("#qbar").innerHTML = here.length ? `<span class="mut">Page ${cur}:</span>` + here.map((q) => `
+    <span class="q-pill" data-id="${q.id}">
+      <b>${esc(q.qid)}</b>
+      <span class="st">${STAT.map((s) => `<button class="${s} ${q.status === s ? "sel" : ""}" data-st="${s}" title="${s}">${STAT_LABEL[s]}</button>`).join("")}</span>
+      <button class="q-star ${q.important ? "on" : ""}" title="Toggle starred">★</button>
+      <input class="q-note-in" value="${esc(q.notes)}" placeholder="Note…" />
     </span>`).join("") : "";
 }
-$("#qbar").onclick = async (e) => {
-  const st = e.target.dataset.st; if (!st) return;
-  const id = Number(e.target.closest(".q").dataset.id);
-  const r = await fetch(`/api/questions/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: st }) });
+async function patchQ(id, body) {
+  const r = await fetch(`/api/questions/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   if (r.ok) { Object.assign(questions.find((q) => q.id === id), await r.json()); renderQ(); }
+}
+$("#qbar").onclick = (e) => {
+  const pill = e.target.closest(".q-pill"); if (!pill) return;
+  const id = Number(pill.dataset.id);
+  if (e.target.dataset.st) patchQ(id, { status: e.target.dataset.st });
+  else if (e.target.classList.contains("q-star")) patchQ(id, { important: !questions.find((q) => q.id === id).important });
 };
+$("#qbar").addEventListener("change", (e) => {
+  if (!e.target.classList.contains("q-note-in")) return;
+  patchQ(Number(e.target.closest(".q-pill").dataset.id), { notes: e.target.value });
+});
 
 // ---------- download annotated PDF ----------
 $("#dl").onclick = async () => {

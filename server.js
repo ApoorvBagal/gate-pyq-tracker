@@ -130,6 +130,15 @@ app.get("/api/questions", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+let metaJson = null;
+app.get("/api/meta", (req, res) => {
+  if (!metaJson) {
+    try { metaJson = require("./data/question_meta.json"); } catch (_) { metaJson = {}; }
+  }
+  res.setHeader("Cache-Control", "private, max-age=86400");
+  res.json(metaJson);
+});
+
 app.patch("/api/questions/:id", async (req, res, next) => {
   try {
     const sets = [], params = [];

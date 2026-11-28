@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Solve · GATE PYQ</title>
+<style>
+  :root {
+    --bg: #0b0e17;
+    --bg-elev: #121726;
+    --bg-card: #161c2e;
+    --bg-hover: #1d253d;
+    --bg-input: #0e1320;
+    --line: #232b42;
+    --line-strong: #344061;
+    --fg: #eef1f8;
+    --fg-soft: #c4cbe0;
+    --mut: #8490b0;
+    --acc: #6366f1;
+    --acc-hover: #818cf8;
+    --acc-soft: rgba(99, 102, 241, 0.15);
+    --ok: #22c55e;
+    --ok-soft: rgba(34, 197, 94, 0.15);
+    --bad: #ef4444;
+    --bad-soft: rgba(239, 68, 68, 0.15);
+    --shaky: #f59e0b;
+    --shaky-soft: rgba(245, 158, 11, 0.16);
+    --un: #475569;
+    --star: #facc15;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  [data-theme="light"] {
+    --bg: #f5f7fb;
+    --bg-elev: #ffffff;
+    --bg-card: #ffffff;
+    --bg-hover: #f1f5fd;
+    --bg-input: #f8fafc;
+    --line: #e2e8f0;
+    --line-strong: #cbd5e1;
+    --fg: #0f172a;
+    --fg-soft: #334155;
+    --mut: #64748b;
+    --acc: #4f46e5;
+    --acc-hover: #4338ca;
+    --acc-soft: rgba(79, 70, 229, 0.1);
+    --ok: #16a34a;
+    --ok-soft: rgba(22, 163, 74, 0.12);
+    --bad: #dc2626;
+    --bad-soft: rgba(220, 38, 38, 0.11);
+    --shaky: #d97706;
+    --shaky-soft: rgba(217, 119, 6, 0.13);
+    --un: #94a3b8;
+    --star: #eab308;
+    --shadow: 0 6px 24px rgba(15, 23, 42, 0.08);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 14px/1.5 Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    -webkit-font-smoothing: antialiased;
+  }
+  .hidden { display: none !important; }
+  .num { font-variant-numeric: tabular-nums; }
+  .mono { font-family: var(--mono); }
+
+  button, input, textarea {
+    font: inherit; color: var(--fg); background: var(--bg-card);
+    border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px;
+    transition: background .15s, border-color .15s, color .15s, transform .1s;
+  }
+  button { cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 500; }
+  button:hover:not(:disabled) { border-color: var(--line-strong); background: var(--bg-hover); }
+  button:active:not(:disabled) { transform: translateY(0.5px); }
+  button:disabled { opacity: .4; cursor: default; }
+  button.primary { background: var(--acc); border-color: var(--acc); color: #fff; }
+  button.primary:hover:not(:disabled) { background: var(--acc-hover); border-color: var(--acc-hover); }
+  button.ghost { background: transparent; border-color: transparent; color: var(--fg-soft); }
+  button.ghost:hover { background: var(--bg-hover); color: var(--fg); }
+  a { color: inherit; text-decoration: none; }
+
+  /* Header */
+  header {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--bg-elev) 90%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .hdr-in {
+    max-width: 960px; margin: auto; padding: 10px 18px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .queue-info {
+    font-size: 13px; color: var(--mut);
+    display: flex; align-items: center; gap: 8px;
+    margin-right: auto;
+  }
+  .queue-pill {
+    background: var(--bg-input); border: 1px solid var(--line);
+    padding: 2px 9px; border-radius: 99px; font-weight: 600; color: var(--fg); font-size: 12px;
+  }
+
+  /* Main container */
+  main { max-width: 960px; margin: auto; padding: 20px 18px 80px; display: flex; flex-direction: column; gap: 16px; }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  /* Question header */
+  .q-hdr {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: var(--bg-elev);
+  }
+  .q-id { font-family: var(--mono); font-size: 15px; font-weight: 700; }
+  .tag {
+    font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 99px;
+    background: var(--bg-input); border: 1px solid var(--line); color: var(--fg-soft);
+  }
+  .tag.diff-Easy { background: var(--ok-soft); border-color: transparent; color: var(--ok); }
+  .tag.diff-Normal { background: var(--acc-soft); border-color: transparent; color: var(--acc-hover); }
+  .tag.diff-Difficult { background: var(--bad-soft); border-color: transparent; color: var(--bad); }
+  .tag.type-tag { background: var(--acc-soft); border-color: transparent; color: var(--acc-hover); }
+  .q-hdr-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .star-btn { font-size: 18px; padding: 3px 8px; background: transparent; border-color: transparent; color: var(--line-strong); }
+  .star-btn.on { color: var(--star); }
+
+  /* Question PDF crop area */
+  .q-body {
+    background: #ffffff;
+    padding: 14px 16px;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+  }
+  .q-body canvas {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+  .q-loading {
+    padding: 48px 16px;
+    color: #64748b;
+    font-size: 14px;
+  }
+
+  /* Interactive answer panel */
+  .ans-panel {
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .ans-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .ans-top h3 { margin: 0; font-size: 14px; font-weight: 600; color: var(--fg-soft); }
+
+  .opts {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .opt-btn {
+    padding: 14px 12px;
+    border-radius: 11px;
+    background: var(--bg-input);
+    border: 2px solid var(--line);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--fg);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .opt-btn:hover:not(:disabled) { border-color: var(--acc); background: var(--acc-soft); }
+  .opt-btn.selected { border-color: var(--acc); background: var(--acc-soft); color: var(--acc-hover); }
+  .opt-btn.correct { border-color: var(--ok); background: var(--ok-soft); color: var(--ok); }
+  .opt-btn.wrong { border-color: var(--bad); background: var(--bad-soft); color: var(--bad); }
+
+  .nat-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .nat-row input {
+    width: 220px; font-size: 16px; font-family: var(--mono);
+    background: var(--bg-input); padding: 10px 14px;
+  }
+  .nat-row input:focus { outline: none; border-color: var(--acc); box-shadow: 0 0 0 3px var(--acc-soft); }
+
+  .ans-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  .result-banner {
+    padding: 12px 16px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    font-weight: 600; font-size: 14px;
+  }
+  .result-banner.ok { background: var(--ok-soft); border: 1px solid color-mix(in srgb, var(--ok) 40%, transparent); color: var(--ok); }
+  .result-banner.bad { background: var(--bad-soft); border: 1px solid color-mix(in srgb, var(--bad) 40%, transparent); color: var(--bad); }
+  .result-banner.info { background: var(--acc-soft); border: 1px solid color-mix(in srgb, var(--acc) 35%, transparent); color: var(--acc-hover); }
+  .result-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* Status & Notes card */
+  .meta-panel {
+    padding: 16px 20px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .meta-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .st {
+    display: inline-flex; background: var(--bg-input); padding: 3px;
+    border-radius: 9px; border: 1px solid var(--line); gap: 3px;
+  }
+  .st button {
+    border: none; background: transparent; padding: 5px 12px;
+    font-size: 12.5px; border-radius: 6px; color: var(--mut); font-weight: 600;
+  }
+  .st button:hover { color: var(--fg); background: var(--bg-hover); }
+  .st .Solved.sel { background: var(--ok); color: #052e16; }
+  .st .Wrong.sel { background: var(--bad); color: #fff; }
+  .st .Shaky.sel { background: var(--shaky); color: #451a03; }
+  .st .Unsolved.sel { background: var(--un); color: #fff; }
+
+  textarea#noteBox {
+    width: 100%; min-height: 70px; resize: vertical;
+    background: var(--bg-input); padding: 10px 12px; font-size: 13.5px;
+  }
+  textarea#noteBox:focus { outline: none; border-color: var(--acc); box-shadow: 0 0 0 3px var(--acc-soft); }
+
+  .kbd-hint { font-size: 12px; color: var(--mut); text-align: center; }
+  kbd {
+    background: var(--bg-card); border: 1px solid var(--line); border-radius: 4px;
+    padding: 1px 5px; font-family: var(--mono); font-size: 11px; color: var(--fg-soft);
+  }
+
+  #toast {
+    position: fixed; bottom: 20px; right: 20px; z-index: 50;
+    background: var(--bg-card); border: 1px solid var(--line-strong);
+    padding: 9px 14px; border-radius: 10px; box-shadow: var(--shadow);
+    font-size: 13px; font-weight: 500; opacity: 0; transform: translateY(8px); pointer-events: none;
+    transition: opacity .2s, transform .2s;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 600px) {
+    .opts { grid-template-columns: repeat(2, 1fr); }
+    main { padding: 14px 10px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-in">
+    <a href="/"><button class="ghost">← Tracker</button></a>
+    <div class="queue-info">
+      <span class="queue-pill num" id="qPos">— / —</span>
+      <span id="qCrumb"></span>
+    </div>
+    <button id="prevBtn" title="Previous question ([)">‹ Prev</button>
+    <button id="nextBtn" class="primary" title="Next question (])">Next ›</button>
+    <a id="pdfBtn" target="_blank"><button class="ghost" title="Open full PDF page">📄 PDF</button></a>
+    <button id="themeBtn" class="ghost" title="Toggle light / dark theme">☀</button>
+  </div>
+</header>
+
+<main>
+  <div class="card">
+    <div class="q-hdr">
+      <span class="q-id" id="qid">—</span>
+      <span class="tag" id="qVol"></span>
+      <span class="tag" id="qExam"></span>
+      <span class="tag hidden" id="qDiff"></span>
+      <span class="tag type-tag hidden" id="qType"></span>
+      <div class="q-hdr-right">
+        <a id="goLink" class="hidden" target="_blank" rel="noopener"><button class="ghost" style="font-size:12.5px">GateOverflow ↗</button></a>
+        <button class="star-btn" id="starBtn" title="Star for revision">★</button>
+      </div>
+    </div>
+    <div class="q-body" id="qBody">
+      <div class="q-loading">Loading question…</div>
+    </div>
+  </div>
+
+  <div class="card ans-panel" id="ansPanel"></div>
+
+  <div class="card meta-panel">
+    <div class="meta-row">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:13px;color:var(--mut);font-weight:500">Status:</span>
+        <div class="st" id="stGroup">
+          <button class="Unsolved" data-st="Unsolved">Unsolved</button>
+          <button class="Solved" data-st="Solved">Solved</button>
+          <button class="Wrong" data-st="Wrong">Wrong</button>
+          <button class="Shaky" data-st="Shaky">Shaky</button>
+        </div>
+      </div>
+      <span id="lastAtt" class="num" style="font-size:12px;color:var(--mut)"></span>
+    </div>
+    <textarea id="noteBox" placeholder="Write a note (mistake made, trick to remember, formula)… saves when you click outside."></textarea>
+  </div>
+
+  <div class="kbd-hint">
+    Shortcuts: <kbd>A</kbd> <kbd>B</kbd> <kbd>C</kbd> <kbd>D</kbd> select option · <kbd>Enter</kbd> check answer · <kbd>[</kbd> <kbd>]</kbd> prev / next question
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script type="module">
+import * as pdfjsLib from "/vendor/pdfjs/pdf.min.mjs";
+pdfjsLib.GlobalWorkerOptions.workerSrc = "/vendor/pdfjs/pdf.worker.min.mjs";
+
+const $ = (s) => document.querySelector(s);
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+// Theme
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem("gate-theme", t);
+  $("#themeBtn").textContent = t === "light" ? "🌙" : "☀";
+}
+applyTheme(localStorage.getItem("gate-theme") || "dark");
+$("#themeBtn").onclick = () => applyTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light");
+
+const toast = (m) => {
+  const t = $("#toast"); t.textContent = m; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1600);
+};
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+
+// State
+let Q = [], byId = new Map(), META = {};
+let queue = [], idx = 0;
+const pdfDocs = {}; // volKey -> Promise<PDFDocumentProxy>
+let selected = new Set(), checked = false, renderToken = 0;
+
+function getPdf(volKey) {
+  if (!pdfDocs[volKey]) {
+    pdfDocs[volKey] = pdfjsLib.getDocument({ url: `/pdf/${volKey}`, withCredentials: true }).promise;
+  }
+  return pdfDocs[volKey];
+}
+
+function parseAnswer(raw) {
+  if (!raw) return { type: "none", raw: null };
+  const s = String(raw).trim();
+  if (/^[A-D]$/i.test(s)) return { type: "mcq", val: s.toUpperCase(), raw: s.toUpperCase() };
+  if (/^[A-D](;[A-D])+$/i.test(s)) return { type: "msq", val: s.toUpperCase().split(";").sort(), raw: s.toUpperCase() };
+  if (/^-?\d+(\.\d+)?(\s*:\s*-?\d+(\.\d+)?)?$/.test(s)) {
+    const parts = s.split(":").map((x) => Number(x.trim()));
+    return { type: "nat", min: parts[0], max: parts.length > 1 ? parts[1] : parts[0], raw: s };
+  }
+  return { type: "other", raw: s };
+}
+
+async function init() {
+  const [qRes, mRes] = await Promise.all([fetch("/api/questions"), fetch("/api/meta")]);
+  if (qRes.status === 401 || mRes.status === 401) { location.href = "/"; return; }
+  Q = await qRes.json();
+  META = await mRes.json();
+  for (const q of Q) byId.set(q.id, q);
+
+  const params = new URLSearchParams(location.search);
+  const reqId = Number(params.get("id"));
+  let saved = null;
+  try { saved = JSON.parse(sessionStorage.getItem("gate-solve-queue") || "null"); } catch (_) {}
+  if (Array.isArray(saved) && saved.length && (!reqId || saved.includes(reqId))) {
+    queue = saved.filter((id) => byId.has(id));
+  } else {
+    queue = Q.map((q) => q.id);
+  }
+  idx = reqId ? Math.max(0, queue.indexOf(reqId)) : 0;
+  showCurrent();
+}
+
+function currentQ() { return byId.get(queue[idx]); }
+function currentMeta(q) { return META[`${q.volume}|${q.qid}`] || {}; }
+
+async function showCurrent() {
+  const q = currentQ();
+  if (!q) return;
+  const m = currentMeta(q);
+  const ans = parseAnswer(m.a);
+  selected = new Set();
+  checked = false;
+
+  history.replaceState(null, "", `?id=${q.id}`);
+  document.title = `${q.qid} · ${q.topic} · GATE PYQ`;
+
+  $("#qPos").textContent = `${idx + 1} / ${queue.length}`;
+  $("#qCrumb").textContent = `${q.subject} › ${q.topic}`;
+  $("#prevBtn").disabled = idx <= 0;
+  $("#nextBtn").disabled = idx >= queue.length - 1;
+
+  const volKey = q.volume === "Vol 1" ? "vol1" : "vol2";
+  const actualPage = m.c?.[0]?.[0] || q.pdf_page || 1;
+  $("#pdfBtn").href = `/viewer.html?vol=${volKey}&page=${actualPage}`;
+
+  $("#qid").textContent = q.qid;
+  $("#qVol").textContent = q.volume;
+  $("#qExam").textContent = q.exam || "";
+  $("#qExam").classList.toggle("hidden", !q.exam);
+  $("#qDiff").textContent = q.difficulty || "";
+  $("#qDiff").className = "tag " + (q.difficulty ? `diff-${q.difficulty}` : "hidden");
+
+  const typeLabel = { mcq: "MCQ", msq: "MSQ (Multiple Select)", nat: "NAT (Numerical)", other: m.a === "X" ? "MTA" : "Descriptive" }[ans.type];
+  $("#qType").textContent = typeLabel || "";
+  $("#qType").classList.toggle("hidden", !typeLabel);
+
+  if (m.u) { $("#goLink").href = m.u; $("#goLink").classList.remove("hidden"); }
+  else $("#goLink").classList.add("hidden");
+
+  syncMetaUI(q);
+  renderAnswerPanel(q, m, ans);
+  renderQuestionCrops(volKey, m.c || [[actualPage, 0.05, 0.94]]);
+}
+
+function syncMetaUI(q) {
+  $("#starBtn").classList.toggle("on", !!q.important);
+  $("#stGroup").querySelectorAll("button").forEach((b) => b.classList.toggle("sel", b.dataset.st === q.status));
+  $("#lastAtt").textContent = q.last_attempted ? `Last attempted: ${q.last_attempted}` : "";
+  $("#noteBox").value = q.notes || "";
+}
+
+async function renderQuestionCrops(volKey, crops) {
+  const token = ++renderToken;
+  const body = $("#qBody");
+  body.innerHTML = `<div class="q-loading">Rendering question…</div>`;
+  try {
+    const doc = await getPdf(volKey);
+    if (token !== renderToken) return;
+    const canvases = [];
+    const targetW = Math.min(860, body.clientWidth - 28 || 820);
+
+    for (const [pgNum, y0, y1] of crops) {
+      const page = await doc.getPage(pgNum);
+      if (token !== renderToken) return;
+      const vp1 = page.getViewport({ scale: 1 });
+      const scale = (targetW / vp1.width) * DPR;
+      const vp = page.getViewport({ scale });
+
+      const sy = Math.max(0, Math.floor(y0 * vp.height));
+      const ey = Math.min(vp.height, Math.ceil(y1 * vp.height));
+      const sh = Math.max(40, ey - sy);
+
+      // Render full page to offscreen canvas, then slice exact crop region
+      const full = document.createElement("canvas");
+      full.width = vp.width;
+      full.height = vp.height;
+      await page.render({ canvasContext: full.getContext("2d"), viewport: vp }).promise;
+      if (token !== renderToken) return;
+
+      const out = document.createElement("canvas");
+      out.width = vp.width;
+      out.height = sh;
+      out.style.width = Math.round(vp.width / DPR) + "px";
+      out.getContext("2d").drawImage(full, 0, sy, vp.width, sh, 0, 0, vp.width, sh);
+      canvases.push(out);
+    }
+
+    body.innerHTML = "";
+    for (const c of canvases) body.appendChild(c);
+  } catch (e) {
+    if (token === renderToken) body.innerHTML = `<div class="q-loading">Could not render PDF slice: ${esc(e.message)}</div>`;
+  }
+}
+
+function renderAnswerPanel(q, m, ans) {
+  const panel = $("#ansPanel");
+  if (ans.type === "mcq" || ans.type === "msq") {
+    const isMsq = ans.type === "msq";
+    panel.innerHTML = `
+      <div class="ans-top">
+        <h3>${isMsq ? "Select all correct options" : "Select your answer"}</h3>
+        <button class="ghost" id="revealBtn" style="font-size:12.5px">Reveal Answer</button>
+      </div>
+      <div class="opts">
+        ${["A", "B", "C", "D"].map((l) => `<button type="button" class="opt-btn" data-opt="${l}">${l}</button>`).join("")}
+      </div>
+      <div class="ans-actions">
+        <button class="primary" id="checkBtn" disabled>Check Answer</button>
+      </div>
+      <div id="resArea"></div>`;
+
+    panel.querySelectorAll(".opt-btn").forEach((b) => {
+      b.onclick = () => {
+        if (checked) return;
+        const opt = b.dataset.opt;
+        if (isMsq) {
+          if (selected.has(opt)) selected.delete(opt); else selected.add(opt);
+        } else {
+          selected.clear(); selected.add(opt);
+        }
+        panel.querySelectorAll(".opt-btn").forEach((x) => x.classList.toggle("selected", selected.has(x.dataset.opt)));
+        $("#checkBtn").disabled = selected.size === 0;
+      };
+    });
+
+    $("#checkBtn").onclick = () => gradeChoice(q, m, ans);
+    $("#revealBtn").onclick = () => revealOnly(q, m, ans);
+  } else if (ans.type === "nat") {
+    panel.innerHTML = `
+      <div class="ans-top">
+        <h3>Enter numerical answer</h3>
+        <button class="ghost" id="revealBtn" style="font-size:12.5px">Reveal Answer</button>
+      </div>
+      <div class="nat-row">
+        <input type="text" inputmode="decimal" id="natIn" placeholder="e.g. 42 or 0.25" autocomplete="off" />
+        <button class="primary" id="checkBtn">Check Answer</button>
+      </div>
+      <div id="resArea"></div>`;
+    $("#natIn").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); gradeNat(q, m, ans); } });
+    $("#checkBtn").onclick = () => gradeNat(q, m, ans);
+    $("#revealBtn").onclick = () => revealOnly(q, m, ans);
+  } else {
+    panel.innerHTML = `
+      <div class="ans-top">
+        <h3>${ans.raw === "X" ? "Marks to All (MTA)" : "Subjective / No single answer key"}</h3>
+        ${m.u ? `<a href="${esc(m.u)}" target="_blank" rel="noopener"><button class="primary">View Solution on GateOverflow ↗</button></a>` : ""}
+      </div>
+      <div style="color:var(--mut);font-size:13px">Use the status buttons below to mark your attempt once you've solved it.</div>`;
+  }
+}
+
+function showResult(q, m, kind, text, extraBtns = "") {
+  const goBtn = m.u ? `<a href="${esc(m.u)}" target="_blank" rel="noopener"><button class="ghost" style="border:1px solid var(--line)">Discussion ↗</button></a>` : "";
+  $("#resArea").innerHTML = `
+    <div class="result-banner ${kind}">
+      <span>${text}</span>
+      <div class="result-actions">${extraBtns}${goBtn}</div>
+    </div>`;
+  const shakyBtn = $("#markShakyBtn");
+  if (shakyBtn) shakyBtn.onclick = () => patchQ(q.id, { status: "Shaky" });
+  const starItBtn = $("#starItBtn");
+  if (starItBtn) starItBtn.onclick = () => patchQ(q.id, { important: true });
+}
+
+function gradeChoice(q, m, ans) {
+  if (checked || selected.size === 0) return;
+  checked = true;
+  const correctSet = new Set(ans.type === "msq" ? ans.val : [ans.val]);
+  const isRight = selected.size === correctSet.size && [...selected].every((x) => correctSet.has(x));
+
+  $("#ansPanel").querySelectorAll(".opt-btn").forEach((b) => {
+    const o = b.dataset.opt;
+    b.classList.remove("selected");
+    if (correctSet.has(o)) b.classList.add("correct");
+    else if (selected.has(o)) b.classList.add("wrong");
+  });
+  $("#checkBtn").disabled = true;
+
+  if (isRight) {
+    patchQ(q.id, { status: "Solved" });
+    showResult(q, m, "ok", `✓ Correct! Answer: ${ans.raw}`, `<button id="markShakyBtn">Guessed? Mark Shaky</button>`);
+  } else {
+    patchQ(q.id, { status: "Wrong" });
+    showResult(q, m, "bad", `✗ Wrong — Correct answer is ${ans.raw}`, `<button id="starItBtn">★ Star for review</button>`);
+  }
+}
+
+function gradeNat(q, m, ans) {
+  if (checked) return;
+  const rawVal = $("#natIn").value.trim();
+  if (!rawVal) return;
+  const num = Number(rawVal);
+  if (Number.isNaN(num)) { toast("Enter a valid number"); return; }
+  checked = true;
+  const eps = 1e-4;
+  const isRight = num >= ans.min - eps && num <= ans.max + eps;
+  $("#checkBtn").disabled = true;
+  const disp = ans.min === ans.max ? String(ans.min) : `${ans.min} to ${ans.max}`;
+  if (isRight) {
+    patchQ(q.id, { status: "Solved" });
+    showResult(q, m, "ok", `✓ Correct! Answer: ${disp}`, `<button id="markShakyBtn">Guessed? Mark Shaky</button>`);
+  } else {
+    patchQ(q.id, { status: "Wrong" });
+    showResult(q, m, "bad", `✗ Wrong — Correct answer is ${disp}`, `<button id="starItBtn">★ Star for review</button>`);
+  }
+}
+
+function revealOnly(q, m, ans) {
+  checked = true;
+  const correctSet = new Set(ans.type === "msq" ? ans.val : ans.type === "mcq" ? [ans.val] : []);
+  $("#ansPanel").querySelectorAll(".opt-btn").forEach((b) => {
+    if (correctSet.has(b.dataset.opt)) b.classList.add("correct");
+  });
+  const btn = $("#checkBtn"); if (btn) btn.disabled = true;
+  const disp = ans.type === "nat" && ans.min !== ans.max ? `${ans.min} to ${ans.max}` : ans.raw;
+  showResult(q, m, "info", `Answer Key: ${disp}`);
+}
+
+async function patchQ(id, body) {
+  const q = byId.get(id);
+  const snap = { status: q.status, important: q.important, notes: q.notes, last_attempted: q.last_attempted };
+  Object.assign(q, body);
+  if (body.status && body.status !== "Unsolved") q.last_attempted = new Date().toISOString().slice(0, 10);
+  syncMetaUI(q);
+  try {
+    const r = await fetch(`/api/questions/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (r.status === 401) { location.href = "/"; return; }
+    if (!r.ok) throw new Error(r.statusText);
+    Object.assign(q, await r.json());
+    syncMetaUI(q);
+    toast("Saved ✓");
+  } catch (e) {
+    Object.assign(q, snap);
+    syncMetaUI(q);
+    toast("Save failed");
+  }
+}
+
+$("#starBtn").onclick = () => { const q = currentQ(); if (q) patchQ(q.id, { important: !q.important }); };
+$("#stGroup").onclick = (e) => { if (e.target.dataset.st) patchQ(currentQ().id, { status: e.target.dataset.st }); };
+$("#noteBox").addEventListener("change", () => patchQ(currentQ().id, { notes: $("#noteBox").value }));
+
+$("#prevBtn").onclick = () => { if (idx > 0) { idx--; showCurrent(); scrollTo(0, 0); } };
+$("#nextBtn").onclick = () => { if (idx < queue.length - 1) { idx++; showCurrent(); scrollTo(0, 0); } };
+
+addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k === "[") { if (idx > 0) { idx--; showCurrent(); scrollTo(0, 0); } }
+  else if (k === "]") { if (idx < queue.length - 1) { idx++; showCurrent(); scrollTo(0, 0); } }
+  else if (["a", "b", "c", "d"].includes(k)) {
+    const btn = document.querySelector(`.opt-btn[data-opt="${k.toUpperCase()}"]`);
+    if (btn) btn.click();
+  } else if (e.key === "Enter") {
+    const btn = $("#checkBtn");
+    if (btn && !btn.disabled) btn.click();
+  }
+});
+
+init();
+</script>
+</body>
+</html>

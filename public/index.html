@@ -294,6 +294,8 @@
   }
   .q-table td { padding: 8px 10px; }
   .qid { font-family: var(--mono); font-weight: 600; font-size: 13px; white-space: nowrap; }
+  .solve-link { color: var(--fg); text-decoration: none; }
+  .solve-link:hover { color: var(--acc-hover); text-decoration: underline; }
   .vol-tag {
     font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 5px;
     background: var(--bg-input); border: 1px solid var(--line); color: var(--mut); white-space: nowrap;
@@ -500,7 +502,10 @@
 
       <div class="list-meta">
         <span id="count"></span>
-        <span id="pageRange" class="num"></span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="pageRange" class="num"></span>
+          <button id="solveFilteredBtn" class="primary" style="padding:5px 12px;font-size:12.5px">▶ Practice Filtered</button>
+        </div>
       </div>
 
       <div class="q-table-wrap">
@@ -812,11 +817,14 @@ function renderList() {
 
   $("#rows").innerHTML = slice.length ? slice.map((x) => `
     <tr data-id="${x.id}">
-      <td class="qid">${esc(x.qid)}</td>
+      <td class="qid"><a href="/solve.html?id=${x.id}" class="solve-link" data-solve-id="${x.id}" title="Solve question">${esc(x.qid)}</a></td>
       <td><span class="vol-tag">${esc(x.volume.replace("Vol ", "V"))}</span></td>
       <td class="topic-cell">${esc(x.topic)}<small>${esc(x.subject)}</small></td>
       <td class="hide-md exam-cell">${esc(x.exam)}</td>
-      <td>${x.pdf_page ? `<a class="pdfl num" target="_blank" href="/viewer.html?vol=${x.volume === "Vol 1" ? "vol1" : "vol2"}&page=${x.pdf_page}" title="Open PDF at page ${x.pdf_page}">📄 ${x.pdf_page}</a>` : ""}</td>
+      <td style="white-space:nowrap">
+        <a class="pdfl" href="/solve.html?id=${x.id}" data-solve-id="${x.id}" title="Solve in interactive mode">▶ Solve</a>
+        ${x.pdf_page ? `<a class="pdfl num" style="background:transparent;color:var(--mut);padding:3px 5px" target="_blank" href="/viewer.html?vol=${x.volume === "Vol 1" ? "vol1" : "vol2"}&page=${x.pdf_page}" title="Open full PDF at page ${x.pdf_page}">📄${x.pdf_page}</a>` : ""}
+      </td>
       <td class="hide-md">${x.difficulty ? `<span class="diff diff-${esc(x.difficulty)}">${esc(x.difficulty)}</span>` : ""}</td>
       <td>
         <div class="st">
@@ -849,10 +857,21 @@ async function update(id, body) {
 }
 
 $("#rows").onclick = (e) => {
+  const sl = e.target.closest("[data-solve-id]");
+  if (sl) {
+    sessionStorage.setItem("gate-solve-queue", JSON.stringify(filtered().map((x) => x.id)));
+    return;
+  }
   const tr = e.target.closest("tr"); if (!tr) return;
   const id = Number(tr.dataset.id);
   if (e.target.dataset.st) update(id, { status: e.target.dataset.st });
   else if (e.target.classList.contains("star")) update(id, { important: !Q.find((x) => x.id === id).important });
+};
+$("#solveFilteredBtn").onclick = () => {
+  const f = filtered();
+  if (!f.length) return;
+  sessionStorage.setItem("gate-solve-queue", JSON.stringify(f.map((x) => x.id)));
+  location.href = `/solve.html?id=${f[0].id}`;
 };
 $("#rows").addEventListener("change", (e) => {
   if (!e.target.classList.contains("note")) return;
